@@ -1,0 +1,6 @@
+{
+  "title": "feat: transactional public GitHub import and evidence-aware reports",
+  "head": "codex/github-reports",
+  "base": "codex/dashboard",
+  "body": "公开仓库导入支持Issue/PR/Commit、正式Review、PR提交关系与显式关闭引用；复合唯一键保证重复导入幂等，失败整轮回滚，分页和请求预算限制可见。周报比较前一等长窗口，含样本、规则提示和代表任务。\n\n验证：21项Pytest通过，Ruff/Black通过。首次新增测试7项失败（MockTransport客户端缺base_url），保留失败提交c9ed125并独立修复。\n\nCloses #5"
+}

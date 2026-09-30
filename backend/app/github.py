@@ -229,7 +229,8 @@ def import_repository(db, repository, max_pages=2, client=None):
                 seen.add(commit.sha)
                 if db.get(m.PRCommit, (pr.id, commit.id)) is None:
                     db.add(m.PRCommit(pr_id=pr.id, commit_id=commit.id))
-            # Only explicit local closing syntax; this is a textual reference, not a verified closure event.
+            # Explicit local closing syntax is a textual reference,
+            # not a verified closure event.
             refs = re.findall(
                 r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)\b",
                 value.get("body") or "",
@@ -242,7 +243,8 @@ def import_repository(db, repository, max_pages=2, client=None):
         project.imported_at = m.utcnow()
         project.import_note = (
             "; ".join(warnings)
-            or "所请求列表分页已完成；Commit含默认分支及采集到的PR提交；不是所有分支历史"
+            or "所请求列表分页已完成；Commit含默认分支及采集到的PR提交；"
+            "不是所有分支历史"
         )
         db.commit()
         return {

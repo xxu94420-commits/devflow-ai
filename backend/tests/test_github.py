@@ -56,7 +56,9 @@ def mock_data(request):
 
 
 def test_import_idempotence_relations_and_formal_review(db):
-    with httpx.Client(transport=httpx.MockTransport(mock_data)) as client:
+    with httpx.Client(
+        base_url="https://api.github.com", transport=httpx.MockTransport(mock_data)
+    ) as client:
         for _ in range(2):
             result = import_repository(db, "test/repo", client=client)
             assert result["issues"] == 1
@@ -76,7 +78,9 @@ def test_import_failure_rolls_back_all_data(db, status):
             else httpx.Response(status)
         )
 
-    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+    with httpx.Client(
+        base_url="https://api.github.com", transport=httpx.MockTransport(handler)
+    ) as client:
         with pytest.raises(ImportFailure):
             import_repository(db, "test/repo", client=client)
     assert db.scalar(select(func.count()).select_from(m.Project)) == 0
@@ -86,7 +90,9 @@ def test_network_failure_and_no_secret_message(db):
     def handler(req):
         raise httpx.ConnectError("private debug secret", request=req)
 
-    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+    with httpx.Client(
+        base_url="https://api.github.com", transport=httpx.MockTransport(handler)
+    ) as client:
         with pytest.raises(ImportFailure) as exc:
             import_repository(db, "test/repo", client=client)
         assert "secret" not in str(exc.value.message)
@@ -99,7 +105,9 @@ def test_pagination_warns_when_capped(db):
             response.headers["link"] = '<https://api.github.com/next>; rel="next"'
         return response
 
-    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+    with httpx.Client(
+        base_url="https://api.github.com", transport=httpx.MockTransport(handler)
+    ) as client:
         result = import_repository(db, "test/repo", max_pages=1, client=client)
     assert any("非全量" in warning for warning in result["warnings"])
 

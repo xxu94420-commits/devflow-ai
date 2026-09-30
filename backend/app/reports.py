@@ -45,7 +45,9 @@ def report(db, mode, start, end, project_id=None):
         value = metric["value"]
         delta = round(value - old, 3) if old is not None and value is not None else "—"
         lines.append(
-            f"| {NAMES[key]} | {value if value is not None else '—'} {metric['unit']} | {old if old is not None else '—'} | {delta} | {metric['n']} | {metric['confidence']}；{metric['note']} |"
+            f"| {NAMES[key]} | {value if value is not None else '—'} {metric['unit']} "
+            f"| {old if old is not None else '—'} | {delta} | {metric['n']} "
+            f"| {metric['confidence']}；{metric['note']} |"
         )
     lines += ["", "## 规则提示（非统计异常检测）"]
     alerts = []
@@ -56,7 +58,8 @@ def report(db, mode, start, end, project_id=None):
         value = current["metrics"][key]["value"]
         if value is not None and (value < threshold if below else value > threshold):
             alerts.append(
-                f"- {label}；需结合 n={current['metrics'][key]['n']} 核查案例，阈值为演示规则。"
+                f"- {label}；需结合 n={current['metrics'][key]['n']} 核查案例，"
+                "阈值为演示规则。"
             )
     lines += alerts or ["- 当前未触发预设规则；不代表不存在质量风险。"]
     lines += ["", "## 代表性案例（按返工次数降序，非随机抽样）"]
@@ -75,7 +78,8 @@ def report(db, mode, start, end, project_id=None):
         query.order_by(m.Task.rework_count.desc(), m.Task.id).limit(3)
     ).all()
     lines += [
-        f"- Task #{t.id}：{safe(t.title)}；类型={t.task_type}；AI={t.uses_ai}；实际={t.actual_hours}h；返工={t.rework_count}次。"
+        f"- Task #{t.id}：{safe(t.title)}；类型={t.task_type}；AI={t.uses_ai}；"
+        f"实际={t.actual_hours}h；返工={t.rework_count}次。"
         for t in cases
     ] or ["- 无已完成任务案例。"]
     lines += [
