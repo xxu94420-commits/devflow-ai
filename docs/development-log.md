@@ -23,3 +23,11 @@
 - 10 passed，Ruff/Black通过（有上游 Starlette/AnyIO 弃用警告）。
 - 初次 Alembic 自动生成因 versions 目录缺失失败；创建目录后生成显式迁移，upgrade → check → downgrade → upgrade通过。
 - 添加42个明确标记的synthetic/demo任务，仅用于演示，不用于开发效率证明。
+
+## 阶段 3：前端看板
+
+- TypeScript、ESLint通过，Vitest 3 passed，Vite生产构建成功。
+- 首次pnpm安装因esbuild脚本未批准返回非零，添加明确allowBuilds配置。
+- Vite/esbuild在Windows沙箱内读取父目录被拒，获授权后运行通过；不把环境限制描述为代码缺陷。
+- 构建显示ECharts完整包约1MB，记录为后续按需导入优化项。
+- 使用真实Issue #4，前端分支基于API分支，形成可评审的堆叠PR。
