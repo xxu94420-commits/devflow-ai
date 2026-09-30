@@ -99,8 +99,11 @@ class InteractionIn(Input):
         if self.accepted_count > self.suggestion_count:
             raise ValueError("accepted_count exceeds suggestion_count")
         text = " ".join(v for v in self.model_dump().values() if isinstance(v, str))
-        if re.search(r"(gh[pousr]_[A-Za-z0-9]{15,}|github_pat_|sk-[A-Za-z0-9]{15,}|"
-                     r"-----BEGIN .*PRIVATE KEY|Bearer\s+[A-Za-z0-9._-]{15,})", text):
+        if re.search(
+            r"(gh[pousr]_[A-Za-z0-9]{15,}|github_pat_|sk-[A-Za-z0-9]{15,}|"
+            r"-----BEGIN .*PRIVATE KEY|Bearer\s+[A-Za-z0-9._-]{15,})",
+            text,
+        ):
             raise ValueError("Possible secret detected. Submit redacted summaries only")
         return self
 

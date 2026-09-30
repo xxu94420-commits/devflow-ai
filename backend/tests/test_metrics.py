@@ -30,14 +30,28 @@ def test_small_samples_and_mode_isolation(db):
     db.flush()
     start = datetime(2026, 1, 1)
     for ai, hours in [(True, 2), (False, 4)]:
-        db.add(m.Task(project_id=project.id, title="task", task_type="功能开发",
-                      uses_ai=ai, estimated_hours=4, actual_hours=hours,
-                      created_at=start, completed_at=start+timedelta(days=1)))
+        db.add(
+            m.Task(
+                project_id=project.id,
+                title="task",
+                task_type="功能开发",
+                uses_ai=ai,
+                estimated_hours=4,
+                actual_hours=hours,
+                created_at=start,
+                completed_at=start + timedelta(days=1),
+            )
+        )
     db.flush()
-    result = analyze(db, "demo", start, start+timedelta(days=30))
+    result = analyze(db, "demo", start, start + timedelta(days=30))
     assert result["metrics"]["ai_task_share"]["value"] == 50
     assert result["metrics"]["ai_time_saving"]["value"] is None
-    assert analyze(db, "live", start, start+timedelta(days=30))["metrics"]["project_count"]["value"] == 0
+    assert (
+        analyze(db, "live", start, start + timedelta(days=30))["metrics"][
+            "project_count"
+        ]["value"]
+        == 0
+    )
 
 
 def test_matched_types_not_global_average(db):
@@ -47,23 +61,45 @@ def test_matched_types_not_global_average(db):
     start = datetime(2026, 1, 1)
     for ai, hours in [(True, 2), (False, 4)]:
         for _ in range(5):
-            db.add(m.Task(project_id=p.id, title="task", task_type="功能开发",
-                          estimated_hours=4, actual_hours=hours, uses_ai=ai,
-                          created_at=start, completed_at=start+timedelta(days=1)))
+            db.add(
+                m.Task(
+                    project_id=p.id,
+                    title="task",
+                    task_type="功能开发",
+                    estimated_hours=4,
+                    actual_hours=hours,
+                    uses_ai=ai,
+                    created_at=start,
+                    completed_at=start + timedelta(days=1),
+                )
+            )
     db.flush()
-    result = analyze(db, "demo", start, start+timedelta(days=30))
+    result = analyze(db, "demo", start, start + timedelta(days=30))
     assert result["metrics"]["ai_time_saving"]["value"] == 50
     assert result["task_types"][2]["ai_n"] == 5
 
 
 def test_validation_secret_and_impossible_counts():
-    values = dict(task_id=1, tool="Codex", stage="功能开发", purpose="test",
-                  prompt_summary="summary", estimated_before_hours=1, actual_hours=1)
+    values = dict(
+        task_id=1,
+        tool="Codex",
+        stage="功能开发",
+        purpose="test",
+        prompt_summary="summary",
+        estimated_before_hours=1,
+        actual_hours=1,
+    )
     with pytest.raises(ValueError, match="accepted_count"):
         InteractionIn(**values, accepted_count=2)
     values["prompt_summary"] = "ghp_" + "a" * 25
     with pytest.raises(ValueError, match="secret"):
         InteractionIn(**values)
     with pytest.raises(ValueError, match="actual_hours"):
-        TaskIn(project_id=1, title="x", task_type="功能开发", estimated_hours=1,
-               created_at=datetime(2026, 1, 1), completed_at=datetime(2026, 1, 2))
+        TaskIn(
+            project_id=1,
+            title="x",
+            task_type="功能开发",
+            estimated_hours=1,
+            created_at=datetime(2026, 1, 1),
+            completed_at=datetime(2026, 1, 2),
+        )
