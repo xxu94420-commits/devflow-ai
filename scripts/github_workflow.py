@@ -33,6 +33,16 @@ if response.is_error:
     print(f"GitHub API status {response.status_code}; no credentials logged")
     raise SystemExit(1)
 result = response.json()
+if isinstance(result, dict) and "workflow_runs" in result:
+    print(json.dumps([{k: x.get(k) for k in (
+        "id", "head_sha", "status", "conclusion", "html_url", "head_branch"
+    )} for x in result["workflow_runs"]]))
+    raise SystemExit(0)
+if isinstance(result, dict) and "jobs" in result:
+    print(json.dumps([{k: x.get(k) for k in (
+        "id", "name", "status", "conclusion", "steps"
+    )} for x in result["jobs"]]))
+    raise SystemExit(0)
 if isinstance(result, list):
     print(json.dumps([{k: x.get(k) for k in ("number", "title", "html_url", "state")} for x in result]))
 else:
