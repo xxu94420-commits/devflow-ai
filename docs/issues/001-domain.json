@@ -1,0 +1,4 @@
+{
+  "title": "建立协作链路模型与可解释研发效能指标",
+  "body": "## 验收\n- Requirement 到 Retrospective 关系模型\n- 16项指标、同类型比较、样本不足提示\n- demo/live 隔离和输入校验测试\n\n## 实际过程\n仓库创建前已形成本地提交 ffdb61f，之后推送 codex/domain-metrics。首次 Pytest 4 passed；Ruff/Black 发现格式和未使用导入问题，正在独立修复。不倒填 Issue 或提交时间。"
+}

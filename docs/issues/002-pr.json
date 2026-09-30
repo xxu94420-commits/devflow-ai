@@ -1,0 +1,6 @@
+{
+  "title": "feat: collaboration API, explicit migration and synthetic demo cohort",
+  "head": "codex/collaboration-api",
+  "base": "main",
+  "body": "实现需求、任务、AI摘要、测试、缺陷及复盘API与任务时间线；拒绝跨项目关联，敏感输入不回显。增加显式Alembic迁移和幂等演示数据。\n\n验证：10项Pytest通过；Ruff/Black通过；迁移upgrade/check/downgrade/upgrade通过。修复了首次生成迁移时versions目录缺失问题。\n\nCloses #2\nRefs #1"
+}
