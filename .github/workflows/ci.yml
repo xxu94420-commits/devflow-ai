@@ -32,7 +32,7 @@ jobs:
           node-version: '24'
       - run: corepack enable && corepack prepare pnpm@11.19.0 --activate
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm test && pnpm build
+      - run: pnpm lint && pnpm format:check && pnpm test && pnpm build
   docker-smoke:
     runs-on: ubuntu-latest
     steps:

@@ -1,0 +1,6 @@
+{
+  "title": "feat: Docker delivery, CI gates, source context and original project documentation",
+  "head": "codex/delivery-quality",
+  "base": "codex/github-reports",
+  "body": "提供Docker Compose持久化部署、健康检查和GitHub Actions三项质量任务，补齐原创指标/数据字典、AI记录协议、ADR、5个真实开发案例和README。页面明确区分论文外部样本与本项目开发案例，图表改为按需加载，新增Markdown附件下载。\n\n验证：本地24项Pytest、3项Vitest，Ruff/Black/TypeScript/ESLint/Prettier和生产构建通过；浏览器任务创建/AI保存/周报预览通过。提交95275a9的CI已实际构建启动Docker Compose成功；本PR最终提交再次由CI检查。仍有上游弃用和526KB图表块提示，不声称性能压测或PostgreSQL验证。\n\nCloses #8\nCloses #4\nRefs #1"
+}

@@ -1,74 +1,1477 @@
-import {useEffect, useState} from 'react';
-import type {FormEvent, ReactNode} from 'react';
-import {Activity, ArrowDownToLine, ArrowUpRight, Bot, Boxes, ChevronRight, CircleDot, ClipboardList, GitBranch, Github, LayoutDashboard, Plus, RefreshCw, Sparkles, X} from 'lucide-react';
-import {api, display, names, setWriteKey, types} from './api';
-import type {Analysis, Detail, Entity, Project, ProjectDetail, Task} from './api';
-import {Chart} from './Chart';
+import { useEffect, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
+import {
+  Activity,
+  ArrowDownToLine,
+  ArrowUpRight,
+  Bot,
+  Boxes,
+  ChevronRight,
+  CircleDot,
+  ClipboardList,
+  GitBranch,
+  Github,
+  LayoutDashboard,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  X,
+} from "lucide-react";
+import {
+  api,
+  display,
+  names,
+  reportDownloadUrl,
+  setWriteKey,
+  sourceRole,
+  types,
+} from "./api";
+import type {
+  Analysis,
+  Detail,
+  Entity,
+  Project,
+  ProjectDetail,
+  Task,
+} from "./api";
+import { Chart } from "./Chart";
 
-const pages = [{name:'总览 Dashboard',icon:LayoutDashboard},{name:'项目详情',icon:Boxes},{name:'AI Coding 分析',icon:Sparkles},{name:'任务与协作链路',icon:GitBranch},{name:'周报与复盘',icon:ClipboardList}];
-const dateString = (date: Date) => date.toISOString().slice(0,10);
-const today = dateString(new Date(Date.now()+86400000));
-const monthAgo = dateString(new Date(Date.now()-29*86400000));
-function Panel({title, hint, children}: {title: string; hint?: string; children: ReactNode}) {return <section className="panel"><div className="panel-title"><h3>{title}</h3>{hint && <span>{hint}</span>}</div>{children}</section>;}
-function Field({label, children}: {label: string; children: ReactNode}) {return <label className="field"><span>{label}</span>{children}</label>;}
-function Empty({text = '暂无记录。导入仓库或创建任务后，这里将显示分析结果。'}: {text?: string}) {return <div className="empty"><Boxes size={30}/><p>{text}</p></div>;}
-function MetricCards({data, keys}: {data: Analysis; keys: string[]}) {return <div className="metrics">{keys.map(key => {const m=data.metrics[key];return <article className="metric" key={key}><span>{names[key]}</span><strong>{display(m.value)} <small>{m.unit}</small></strong><div><i className={m.n < 5 ? 'amber':'green'}/><span>n = {m.n} · {m.confidence}</span></div>{m.note && <p>{m.note}</p>}</article>;})}</div>;}
-function Trend({data}: {data: Analysis}) {return <Chart label="Issue、PR、Commit与任务每日趋势" option={{tooltip:{trigger:'axis'},legend:{bottom:0,icon:'circle'},grid:{left:35,right:15,top:20,bottom:55},xAxis:{type:'category',data:data.trend.map(x=>x.date.slice(5)),axisLine:{lineStyle:{color:'#dbe1eb'}},axisLabel:{color:'#8490a6'}},yAxis:{type:'value',minInterval:1,splitLine:{lineStyle:{color:'#eff2f6'}}},series:([{key:'commits',name:'Commits'},{key:'issues',name:'Issues'},{key:'prs',name:'Pull Requests'},{key:'tasks',name:'完成任务'}] as const).map(s=>({name:s.name,type:'line',smooth:true,symbol:'none',data:data.trend.map(x=>x[s.key])}))}}/>;}
-function Donut({data,label}: {data: Record<string,number>; label: string}) {return Object.keys(data).length ? <Chart label={label} option={{tooltip:{trigger:'item'},legend:{bottom:0,type:'scroll',icon:'circle'},series:[{type:'pie',radius:['48%','70%'],center:['50%','43%'],label:{show:false},itemStyle:{borderRadius:5,borderColor:'#fff',borderWidth:3},data:Object.entries(data).map(([name,value])=>({name,value}))}]}}/> : <Empty/>;}
+const pages = [
+  { name: "总览 Dashboard", icon: LayoutDashboard },
+  { name: "项目详情", icon: Boxes },
+  { name: "AI Coding 分析", icon: Sparkles },
+  { name: "任务与协作链路", icon: GitBranch },
+  { name: "周报与复盘", icon: ClipboardList },
+];
+const dateString = (date: Date) => date.toISOString().slice(0, 10);
+const today = dateString(new Date(Date.now() + 86400000));
+const monthAgo = dateString(new Date(Date.now() - 29 * 86400000));
+function Panel({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="panel">
+      <div className="panel-title">
+        <h3>{title}</h3>
+        {hint && <span>{hint}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      {children}
+    </label>
+  );
+}
+function Empty({
+  text = "暂无记录。导入仓库或创建任务后，这里将显示分析结果。",
+}: {
+  text?: string;
+}) {
+  return (
+    <div className="empty">
+      <Boxes size={30} />
+      <p>{text}</p>
+    </div>
+  );
+}
+function MetricCards({ data, keys }: { data: Analysis; keys: string[] }) {
+  return (
+    <div className="metrics">
+      {keys.map((key) => {
+        const m = data.metrics[key];
+        return (
+          <article className="metric" key={key}>
+            <span>{names[key]}</span>
+            <strong>
+              {display(m.value)} <small>{m.unit}</small>
+            </strong>
+            <div>
+              <i className={m.n < 5 ? "amber" : "green"} />
+              <span>
+                n = {m.n} · {m.confidence}
+              </span>
+            </div>
+            {m.note && <p>{m.note}</p>}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+function Trend({ data }: { data: Analysis }) {
+  return (
+    <Chart
+      label="Issue、PR、Commit与任务每日趋势"
+      option={{
+        tooltip: { trigger: "axis" },
+        legend: { bottom: 0, icon: "circle" },
+        grid: { left: 35, right: 15, top: 20, bottom: 55 },
+        xAxis: {
+          type: "category",
+          data: data.trend.map((x) => x.date.slice(5)),
+          axisLine: { lineStyle: { color: "#dbe1eb" } },
+          axisLabel: { color: "#8490a6" },
+        },
+        yAxis: {
+          type: "value",
+          minInterval: 1,
+          splitLine: { lineStyle: { color: "#eff2f6" } },
+        },
+        series: (
+          [
+            { key: "commits", name: "Commits" },
+            { key: "issues", name: "Issues" },
+            { key: "prs", name: "Pull Requests" },
+            { key: "tasks", name: "完成任务" },
+          ] as const
+        ).map((s) => ({
+          name: s.name,
+          type: "line",
+          smooth: true,
+          symbol: "none",
+          data: data.trend.map((x) => x[s.key]),
+        })),
+      }}
+    />
+  );
+}
+function Donut({
+  data,
+  label,
+}: {
+  data: Record<string, number>;
+  label: string;
+}) {
+  return Object.keys(data).length ? (
+    <Chart
+      label={label}
+      option={{
+        tooltip: { trigger: "item" },
+        legend: { bottom: 0, type: "scroll", icon: "circle" },
+        series: [
+          {
+            type: "pie",
+            radius: ["48%", "70%"],
+            center: ["50%", "43%"],
+            label: { show: false },
+            itemStyle: { borderRadius: 5, borderColor: "#fff", borderWidth: 3 },
+            data: Object.entries(data).map(([name, value]) => ({
+              name,
+              value,
+            })),
+          },
+        ],
+      }}
+    />
+  ) : (
+    <Empty />
+  );
+}
 
 export default function App() {
-  const [page,setPage]=useState(0), [mode,setMode]=useState('demo'), [start,setStart]=useState(monthAgo), [end,setEnd]=useState(today);
-  const [projects,setProjects]=useState<Project[]>([]), [pid,setPid]=useState(''), [tasks,setTasks]=useState<Task[]>([]);
-  const [data,setData]=useState<Analysis|null>(null), [project,setProject]=useState<ProjectDetail|null>(null), [detail,setDetail]=useState<Detail|null>(null);
-  const [version,setVersion]=useState(0), [error,setError]=useState(''), [notice,setNotice]=useState(''), [loading,setLoading]=useState(true), [busy,setBusy]=useState(false);
-  const [modal,setModal]=useState<'task'|'ai'|'import'|'record'|null>(null), [report,setReport]=useState(''), [search,setSearch]=useState('');
-  const query = `mode=${mode}&start=${start}T00:00:00&end=${end}T00:00:00${pid ? `&project_id=${pid}`:''}`;
-  useEffect(()=>{let active=true;setLoading(true);setError('');setData(null);setProject(null);setTasks([]);setDetail(null);setReport('');
-    Promise.all([api<Project[]>(`/projects?mode=${mode}`),api<Analysis>(`/metrics?${query}`),api<Task[]>(`/tasks?mode=${mode}${pid?`&project_id=${pid}`:''}`),pid?api<ProjectDetail>(`/projects/${pid}`):Promise.resolve(null)])
-      .then(([p,a,t,d])=>{if(active){setProjects(p);setData(a);setTasks(t);setProject(d);}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};
-  },[mode,pid,query,version]);
-  async function action(work:()=>Promise<unknown>,message:string){setBusy(true);setError('');try{await work();setNotice(message);setVersion(x=>x+1);setModal(null);}catch(e){setError(e instanceof Error?e.message:'操作失败');}finally{setBusy(false);}}
-  async function openTask(id:number){setError('');try{setDetail(await api<Detail>(`/tasks/${id}`));setPage(3);}catch(e){setError((e as Error).message);}}
-  async function generateReport(){setBusy(true);setError('');try{const r=await api<{markdown:string}>(`/reports?${query}`);setReport(r.markdown);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
-  function download(){const url=URL.createObjectURL(new Blob([report],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`devflow-${mode}-${start}.md`;a.click();URL.revokeObjectURL(url);}
-  const visibleTasks=tasks.filter(t=>t.title.toLowerCase().includes(search.toLowerCase()));
-  function taskTable(){return <><div className="table-actions"><input aria-label="搜索任务" placeholder="搜索任务名称…" value={search} onChange={e=>setSearch(e.target.value)}/><button className="secondary" onClick={()=>setModal('task')}><Plus size={16}/>新建任务</button></div>{visibleTasks.length ? <div className="table-scroll"><table><thead><tr><th>任务名称</th><th>类型</th><th>开发方式</th><th>实际耗时</th><th>返工</th><th>状态</th></tr></thead><tbody>{visibleTasks.map(t=><tr key={t.id} onClick={()=>void openTask(t.id)}><td><button className="text-button">{t.title}</button></td><td>{t.task_type}</td><td><span className={t.uses_ai?'tag blue':'tag'}>{t.uses_ai?'AI 辅助':'人工开发'}</span></td><td>{display(t.actual_hours)} h</td><td>{t.rework_count}</td><td><span className={t.completed_at?'status done':'status'}>{t.completed_at?'已完成':'进行中'}</span></td></tr>)}</tbody></table></div>:<Empty/>}</>;}
-  return <div className="app"><aside className="sidebar"><div className="brand"><div className="brand-icon"><Activity size={25}/></div><div>DevFlow <b>AI</b><small>ENGINEERING INTELLIGENCE</small></div></div><div className="workspace"><span className="workspace-icon">D</span><div>研发效能工作空间<small>Personal workspace</small></div><ChevronRight size={15}/></div><div className="nav-caption">工作台 / WORKSPACE</div><nav>{pages.map((p,i)=><button key={p.name} className={page===i?'active':''} onClick={()=>{setPage(i);setDetail(null);}}><p.icon size={19}/>{p.name}{page===i&&<span className="nav-dot"/>}</button>)}</nav><div className="sidebar-note"><Sparkles size={22}/><strong>让 AI 协作过程可度量</strong><p>从需求到复盘，关注交付与质量，而不只是代码数量。</p><span>OBSERVE · LEARN · IMPROVE</span></div><div className="sidebar-bottom"><span className="avatar">DF</span><div>DevFlow AI<small>Portfolio edition · v0.1</small></div><span className="online"/></div></aside>
-    <main><header className="topbar"><div>工作空间 <ChevronRight size={14}/> <b>{pages[page].name}</b></div><div className="top-actions"><span className="status done"><i/>本地分析平台</span><a href="https://github.com/xxu94420-commits/devflow-ai" target="_blank" rel="noreferrer" aria-label="GitHub项目"><Github size={20}/></a></div></header><div className="content"><div className="heading"><div><span className="eyebrow">DEVELOPMENT FLOW, MADE VISIBLE</span><h1>{['研发效能总览','项目交付洞察','AI Coding 效果分析','任务与协作链路','周报与复盘'][page]}</h1><p>{['在同一个视图中，理解交付效率、工程质量与 AI 协作表现。','连接仓库活动与业务任务，还原每一次交付。','以同类任务对比观察 AI 表现，让样本与限制一同可见。','记录真实开发过程，追踪从需求到复盘的完整历史。','把指标变化转化为可追溯、可讨论的复盘材料。'][page]}</p></div><button className="primary" onClick={()=>setModal(page===2?'ai':'import')}><Plus size={16}/>{page===2?'记录 AI 协作':'导入 GitHub 仓库'}</button></div>
-    <div className="filters"><div className="mode-switch">{['demo','live'].map(m=><button key={m} className={mode===m?'selected':''} onClick={()=>{setMode(m);setPid('');}}>{m==='demo'?'Demo 演示':'Live 真实'}</button>)}</div><select aria-label="选择项目" value={pid} onChange={e=>setPid(e.target.value)}><option value="">全部项目</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><div className="date-range"><input aria-label="开始日期" type="date" value={start} onChange={e=>setStart(e.target.value)}/><span>→</span><input aria-label="结束日期（不含）" type="date" value={end} onChange={e=>setEnd(e.target.value)}/></div><button className="icon-button" aria-label="刷新数据" onClick={()=>setVersion(x=>x+1)}><RefreshCw size={17}/></button></div>
-    <div className={mode==='demo'?'banner':'banner live'}><CircleDot size={16}/><span>{mode==='demo'?<><b>演示模式</b> · synthetic/demo data · 所有记录均为模拟数据，不代表真实业务表现。</>:<><b>真实模式</b> · GitHub 公开仓库 + 人工记录；AI 使用情况不从 Commit 推断。</>}</span>{mode==='demo'&&<button disabled={busy} onClick={()=>void action(()=>api('/demo/seed',{}),'演示数据已就绪')}>初始化演示数据 <ArrowUpRight size={14}/></button>}</div>
-    {error&&<div role="alert" className="error">{error}<button onClick={()=>setError('')} aria-label="关闭错误"><X size={16}/></button></div>}{notice&&<div className="notice">{notice}<button onClick={()=>setNotice('')} aria-label="关闭提示"><X size={16}/></button></div>}
-    {loading?<div className="empty">正在读取分析数据…</div>:data&&<>
-      {page===0&&<><MetricCards data={data} keys={['project_count','issue_close_rate','delivery_cycle','test_pass_rate','ai_task_share','rework_rate']}/><div className="grid two-one"><Panel title="研发活动趋势" hint="按日 · 当前所选范围"><Trend data={data}/></Panel><Panel title="任务类型分布" hint="已完成任务"><Donut data={data.task_distribution} label="任务类型分布"/></Panel></div><div className="grid two-one"><Panel title="近期开发任务" hint={`${tasks.length} 个任务 · 点击查看协作链路`}>{taskTable()}</Panel><Panel title="分析边界" hint="可信度说明"><div className="insight"><div className="insight-icon"><Bot size={25}/></div><h4>先看样本，再看结论</h4><p>同类 AI / 非 AI 任务每组至少 5 个，才展示耗时差异。小样本展示“—”，不生成效率提升结论。</p><div className="mini-stats"><span>新发现缺陷<strong>{data.defects}</strong></span><span>完成任务返工次数<strong>{data.reworks}</strong></span></div><button className="text-button" onClick={()=>setPage(2)}>查看 AI 分析 <ArrowUpRight size={14}/></button></div></Panel></div></>}
-      {page===1&&<>{!project?<Panel title="选择项目">{projects.length? <div className="project-list">{projects.map(p=><button key={p.id} onClick={()=>setPid(String(p.id))}><Boxes/><strong>{p.name}</strong><span>{p.repository}</span><ChevronRight/></button>)}</div>:<Empty/>}</Panel>:<><Panel title={project.name} hint={project.mode}><p>{project.description}</p><p className="muted">{project.repository} · 最后导入：{project.imported_at??'尚未导入'}</p>{project.import_note&&<p className="warning-text">{project.import_note}</p>}<div className="repo-stats"><span>{project.issues.length} Issues</span><span>{project.pull_requests.length} Pull Requests</span><span>{project.commits.length} Commits</span></div></Panel><MetricCards data={data} keys={['delivery_cycle','pr_review_hours','defect_density','rework_rate']}/><div className="grid equal"><Panel title="Issue / PR / Commit 趋势"><Trend data={data}/></Panel><Panel title="需求变更与交付周期" hint={`n = ${data.change_cycle.length}`}><Chart label="需求变更次数与交付天数散点分布" option={{tooltip:{},grid:{left:50,right:25,bottom:45},xAxis:{name:'变更次数',type:'value',minInterval:1,nameLocation:'middle',nameGap:25},yAxis:{name:'交付天数',type:'value'},series:[{type:'scatter',symbolSize:12,data:data.change_cycle.map(x=>[x.changes,x.days])}]}}/></Panel></div><Panel title="项目任务">{taskTable()}</Panel><Panel title="仓库对象"><div className="grid equal">{(['issues','pull_requests'] as const).map(key=><div key={key}><h4>{key==='issues'?'Issues':'Pull Requests'}</h4>{project[key].slice(0,15).map(x=><p key={x.id} className="repo-object"><span>#{x.number}</span> {x.title} <small>{x.state} · {x.author}</small></p>)}{!project[key].length&&<p className="muted">当前导入范围无记录</p>}</div>)}</div></Panel></>}</>}
-      {page===2&&<><MetricCards data={data} keys={['ai_task_share','ai_acceptance_rate','ai_avg_hours','non_ai_avg_hours','ai_time_saving','first_test_pass_rate']}/><div className="grid equal"><Panel title="AI 工具使用分布" hint="按交互记录计数"><Donut data={data.tool_distribution} label="AI工具使用分布"/></Panel><Panel title="AI 参与环节" hint="按交互记录计数"><Chart label="AI参与环节分布" option={{tooltip:{trigger:'axis'},grid:{left:85,right:25,top:15,bottom:25},xAxis:{type:'value',minInterval:1},yAxis:{type:'category',data:Object.keys(data.stage_distribution)},series:[{type:'bar',barWidth:14,itemStyle:{borderRadius:[0,4,4,0]},data:Object.values(data.stage_distribution)}]}}/></Panel></div><Panel title="同类型任务比较" hint="小时 · 完成任务队列"><div className="table-scroll"><table><thead><tr><th>任务类型</th><th>AI 样本 / 均值</th><th>非 AI 样本 / 均值</th><th>时间差</th><th>解释限制</th></tr></thead><tbody>{data.task_types.map(t=><tr key={t.task_type}><td>{t.task_type}</td><td>{t.ai_n} / {display(t.ai_hours)} h</td><td>{t.non_ai_n} / {display(t.non_ai_hours)} h</td><td>{display(t.saving_pct)}{t.saving_pct!==null?'%':''}</td><td><span className="muted">{t.note}</span></td></tr>)}</tbody></table></div><p className="footnote">正值表示观察到 AI 组耗时更少，负值表示更多。任务复杂度、人员经验和选择偏差均未控制，不表示因果提升或统计显著性。</p></Panel></>}
-      {page===3&&<>{detail?<><div className="detail-top"><button className="secondary" onClick={()=>setDetail(null)}>← 返回任务列表</button><button className="primary" onClick={()=>setModal('record')}><Plus size={16}/>更新任务 / 补充记录</button><button className="secondary" onClick={()=>setModal('ai')}>记录 AI 协作</button></div><Panel title={detail.title} hint={detail.task_type}><p>{detail.description}</p><div className="repo-stats"><span>预计 {detail.estimated_hours} h / 实际 {display(detail.actual_hours)} h</span><span>Prompt {detail.ai_summary.prompt_count} 次</span><span>采纳 {detail.ai_summary.accepted_count} 条</span><span>人工修改 {detail.ai_summary.human_modification_count} 次</span><span>缺陷 {detail.defect_count} / 返工 {detail.rework_count}</span><span>首次测试：{detail.first_test_passed===null?'未记录':detail.first_test_passed?'通过':'未通过'}</span></div></Panel><div className="grid equal"><Panel title="完整历史协作链路" hint="UTC 时间"><div className="timeline">{detail.timeline.map((e,i)=><div key={`${e.kind}-${e.id}-${i}`}><span className="timeline-dot"/><small>{e.at.replace('T',' ').slice(0,19)} · {e.kind}</small><h4>{e.title}</h4></div>)}</div></Panel><Panel title="AI 协作摘要" hint="仅保存脱敏摘要">{detail.interactions.length?detail.interactions.map(i=><article className="interaction" key={i.id}><span className="tag blue">{i.tool}</span><h4>{i.purpose}</h4><p>{i.prompt_summary}</p><p>建议：{i.suggestion_summary}</p><p>采纳 {i.accepted_count}/{i.suggestion_count} · {i.quality_result}</p><small>人工修正：{i.modification_notes||'未记录'}</small></article>):<Empty text="此任务尚未记录 AI 协作。"/>}</Panel></div></>:<Panel title="任务列表" hint="包含进行中与已完成任务">{taskTable()}</Panel>}</>}
-      {page===4&&<><Panel title="生成本周期研发复盘" hint="与前一等长时间窗口对比"><p className="muted">报告包含指标、样本数量、前期变化、异常规则和代表性任务。没有可靠数据时明确标记未知。</p><div className="detail-top"><button className="primary" disabled={busy} onClick={()=>void generateReport()}><Sparkles size={16}/>生成 Markdown 周报</button><button className="secondary" disabled={!report} onClick={download}><ArrowDownToLine size={16}/>下载 .md</button></div></Panel>{report&&<Panel title="周报预览" hint={`${start} → ${end}（结束不含）`}><pre className="report">{report}</pre></Panel>}<Panel title="全部指标及口径提示"><div className="table-scroll"><table><thead><tr><th>指标</th><th>结果</th><th>样本量</th><th>口径 / 限制</th></tr></thead><tbody>{Object.entries(data.metrics).map(([k,m])=><tr key={k}><td>{names[k]}</td><td>{display(m.value)} {m.unit}</td><td>{m.n}</td><td>{m.note||m.confidence}</td></tr>)}</tbody></table></div></Panel></>}
-    </>}
-    <footer>DevFlow AI <span>面向 AI 辅助开发的研发效能分析平台</span><small>UTC 时间 · 结束日期不含 · 描述性分析</small></footer></div></main>
-    {modal&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="数据记录"><div className="panel-title"><h3>{modal==='import'?'接入 GitHub 公开仓库':modal==='task'?'新建开发任务':modal==='ai'?'记录 AI 辅助开发':'更新任务与链路记录'}</h3><button className="icon-button" onClick={()=>setModal(null)} aria-label="关闭窗口"><X/></button></div>{error&&<p role="alert" className="error">{error}</p>}<Field label="写入 API Key（仅服务端启用时需要；仅保存在内存）"><input type="password" autoComplete="off" onChange={e=>setWriteKey(e.target.value)} placeholder="可留空，不是 GitHub Token"/></Field>
-      {modal==='import'?<form onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void action(()=>api('/github/import',{repository:f.get('repository'),max_pages:Number(f.get('max_pages'))}),'仓库已导入，请切换 Live 模式查看');}}><Field label="仓库 owner/name"><input name="repository" required defaultValue="xxu94420-commits/mbrset-dissertation-code" pattern="[\w.-]+/[\w.-]+"/></Field><Field label="每类对象最大页数（每页 100 条）"><input name="max_pages" type="number" min="1" max="10" defaultValue="2"/></Field><p className="footnote">Token 仅从后端环境变量读取。导入受分页上限影响，会显示覆盖范围；重复导入更新现有数据。</p><button className="primary" disabled={busy}>{busy?'导入中…':'开始导入'}</button></form>:
-      modal==='task'?<TaskForm projects={projects} pid={pid} busy={busy} submit={body=>action(()=>api('/tasks',body),'任务已创建')}/>:
-      modal==='ai'?<AIForm tasks={tasks} selected={detail?.id} busy={busy} submit={body=>action(()=>api('/interactions',body),'AI 记录已保存')}/>:
-      detail&&<RecordForm task={detail} busy={busy} submit={(path,body,method)=>action(()=>api(path,body,method),'记录已保存；重新打开任务可查看更新')}/>}
-    </section></div>}
-  </div>;
+  const [page, setPage] = useState(0),
+    [mode, setMode] = useState("demo"),
+    [start, setStart] = useState(monthAgo),
+    [end, setEnd] = useState(today);
+  const [projects, setProjects] = useState<Project[]>([]),
+    [pid, setPid] = useState(""),
+    [tasks, setTasks] = useState<Task[]>([]);
+  const [data, setData] = useState<Analysis | null>(null),
+    [project, setProject] = useState<ProjectDetail | null>(null),
+    [detail, setDetail] = useState<Detail | null>(null);
+  const [version, setVersion] = useState(0),
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
+    [loading, setLoading] = useState(true),
+    [busy, setBusy] = useState(false);
+  const [modal, setModal] = useState<
+      "task" | "ai" | "import" | "record" | null
+    >(null),
+    [report, setReport] = useState(""),
+    [search, setSearch] = useState("");
+  const query = `mode=${mode}&start=${start}T00:00:00&end=${end}T00:00:00${pid ? `&project_id=${pid}` : ""}`;
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    setData(null);
+    setProject(null);
+    setTasks([]);
+    setDetail(null);
+    setReport("");
+    Promise.all([
+      api<Project[]>(`/projects?mode=${mode}`),
+      api<Analysis>(`/metrics?${query}`),
+      api<Task[]>(`/tasks?mode=${mode}${pid ? `&project_id=${pid}` : ""}`),
+      pid ? api<ProjectDetail>(`/projects/${pid}`) : Promise.resolve(null),
+    ])
+      .then(([p, a, t, d]) => {
+        if (active) {
+          setProjects(p);
+          setData(a);
+          setTasks(t);
+          setProject(d);
+        }
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [mode, pid, query, version]);
+  async function action(work: () => Promise<unknown>, message: string) {
+    setBusy(true);
+    setError("");
+    try {
+      await work();
+      setNotice(message);
+      setVersion((x) => x + 1);
+      setModal(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "操作失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function openTask(id: number) {
+    setError("");
+    try {
+      setDetail(await api<Detail>(`/tasks/${id}`));
+      setPage(3);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function generateReport() {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await api<{ markdown: string }>(`/reports?${query}`);
+      setReport(r.markdown);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function download() {
+    const a = document.createElement("a");
+    a.href = reportDownloadUrl(query);
+    a.download = `devflow-${mode}-${start}.md`;
+    a.click();
+  }
+  const visibleTasks = tasks.filter((t) =>
+    t.title.toLowerCase().includes(search.toLowerCase()),
+  );
+  function taskTable() {
+    return (
+      <>
+        <div className="table-actions">
+          <input
+            aria-label="搜索任务"
+            placeholder="搜索任务名称…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button className="secondary" onClick={() => setModal("task")}>
+            <Plus size={16} />
+            新建任务
+          </button>
+        </div>
+        {visibleTasks.length ? (
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>任务名称</th>
+                  <th>类型</th>
+                  <th>开发方式</th>
+                  <th>实际耗时</th>
+                  <th>返工</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(page === 0 ? visibleTasks.slice(0, 6) : visibleTasks).map(
+                  (t) => (
+                    <tr key={t.id} onClick={() => void openTask(t.id)}>
+                      <td>
+                        <button className="text-button">{t.title}</button>
+                      </td>
+                      <td>{t.task_type}</td>
+                      <td>
+                        <span className={t.uses_ai ? "tag blue" : "tag"}>
+                          {t.uses_ai ? "AI 辅助" : "人工开发"}
+                        </span>
+                      </td>
+                      <td>{display(t.actual_hours)} h</td>
+                      <td>{t.rework_count}</td>
+                      <td>
+                        <span
+                          className={t.completed_at ? "status done" : "status"}
+                        >
+                          {t.completed_at ? "已完成" : "进行中"}
+                        </span>
+                      </td>
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Empty />
+        )}
+      </>
+    );
+  }
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-icon">
+            <Activity size={25} />
+          </div>
+          <div>
+            DevFlow <b>AI</b>
+            <small>ENGINEERING INTELLIGENCE</small>
+          </div>
+        </div>
+        <div className="workspace">
+          <span className="workspace-icon">D</span>
+          <div>
+            研发效能工作空间<small>Personal workspace</small>
+          </div>
+          <ChevronRight size={15} />
+        </div>
+        <div className="nav-caption">工作台 / WORKSPACE</div>
+        <nav>
+          {pages.map((p, i) => (
+            <button
+              key={p.name}
+              className={page === i ? "active" : ""}
+              onClick={() => {
+                setPage(i);
+                setDetail(null);
+              }}
+            >
+              <p.icon size={19} />
+              {p.name}
+              {page === i && <span className="nav-dot" />}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-note">
+          <Sparkles size={22} />
+          <strong>让 AI 协作过程可度量</strong>
+          <p>从需求到复盘，关注交付与质量，而不只是代码数量。</p>
+          <span>OBSERVE · LEARN · IMPROVE</span>
+        </div>
+        <div className="sidebar-bottom">
+          <span className="avatar">DF</span>
+          <div>
+            DevFlow AI<small>Portfolio edition · v0.1</small>
+          </div>
+          <span className="online" />
+        </div>
+      </aside>
+      <main>
+        <header className="topbar">
+          <div>
+            工作空间 <ChevronRight size={14} /> <b>{pages[page].name}</b>
+          </div>
+          <div className="top-actions">
+            <span className="status done">
+              <i />
+              本地分析平台
+            </span>
+            <a
+              href="https://github.com/xxu94420-commits/devflow-ai"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="GitHub项目"
+            >
+              <Github size={20} />
+            </a>
+          </div>
+        </header>
+        <div className="content">
+          <div className="heading">
+            <div>
+              <span className="eyebrow">DEVELOPMENT FLOW, MADE VISIBLE</span>
+              <h1>
+                {
+                  [
+                    "研发效能总览",
+                    "项目交付洞察",
+                    "AI Coding 效果分析",
+                    "任务与协作链路",
+                    "周报与复盘",
+                  ][page]
+                }
+              </h1>
+              <p>
+                {
+                  [
+                    "在同一个视图中，理解交付效率、工程质量与 AI 协作表现。",
+                    "连接仓库活动与业务任务，还原每一次交付。",
+                    "以同类任务对比观察 AI 表现，让样本与限制一同可见。",
+                    "记录真实开发过程，追踪从需求到复盘的完整历史。",
+                    "把指标变化转化为可追溯、可讨论的复盘材料。",
+                  ][page]
+                }
+              </p>
+            </div>
+            <button
+              className="primary"
+              onClick={() => setModal(page === 2 ? "ai" : "import")}
+            >
+              <Plus size={16} />
+              {page === 2 ? "记录 AI 协作" : "导入 GitHub 仓库"}
+            </button>
+          </div>
+          <div className="filters">
+            <div className="mode-switch">
+              {["demo", "live"].map((m) => (
+                <button
+                  key={m}
+                  className={mode === m ? "selected" : ""}
+                  onClick={() => {
+                    setMode(m);
+                    setPid("");
+                  }}
+                >
+                  {m === "demo" ? "Demo 演示" : "Live 真实"}
+                </button>
+              ))}
+            </div>
+            <select
+              aria-label="选择项目"
+              value={pid}
+              onChange={(e) => setPid(e.target.value)}
+            >
+              <option value="">全部项目</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <div className="date-range">
+              <input
+                aria-label="开始日期"
+                type="date"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+              />
+              <span>→</span>
+              <input
+                aria-label="结束日期（不含）"
+                type="date"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+            <button
+              className="icon-button"
+              aria-label="刷新数据"
+              onClick={() => setVersion((x) => x + 1)}
+            >
+              <RefreshCw size={17} />
+            </button>
+          </div>
+          <div className={mode === "demo" ? "banner" : "banner live"}>
+            <CircleDot size={16} />
+            <span>
+              {mode === "demo" ? (
+                <>
+                  <b>演示模式</b> · synthetic/demo data ·
+                  所有记录均为模拟数据，不代表真实业务表现。
+                </>
+              ) : (
+                <>
+                  <b>真实模式</b> · GitHub 公开仓库 + 人工记录；AI 使用情况不从
+                  Commit 推断。
+                </>
+              )}
+            </span>
+            {mode === "demo" && (
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void action(() => api("/demo/seed", {}), "演示数据已就绪")
+                }
+              >
+                初始化演示数据 <ArrowUpRight size={14} />
+              </button>
+            )}
+          </div>
+          {error && (
+            <div role="alert" className="error">
+              {error}
+              <button onClick={() => setError("")} aria-label="关闭错误">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          {notice && (
+            <div className="notice">
+              {notice}
+              <button onClick={() => setNotice("")} aria-label="关闭提示">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          {loading ? (
+            <div className="empty">正在读取分析数据…</div>
+          ) : (
+            data && (
+              <>
+                {page === 0 && (
+                  <>
+                    <MetricCards
+                      data={data}
+                      keys={[
+                        "project_count",
+                        "issue_close_rate",
+                        "delivery_cycle",
+                        "test_pass_rate",
+                        "ai_task_share",
+                        "rework_rate",
+                      ]}
+                    />
+                    <div className="grid two-one">
+                      <Panel title="研发活动趋势" hint="按日 · 当前所选范围">
+                        <Trend data={data} />
+                      </Panel>
+                      <Panel title="任务类型分布" hint="已完成任务">
+                        <Donut
+                          data={data.task_distribution}
+                          label="任务类型分布"
+                        />
+                      </Panel>
+                    </div>
+                    <div className="grid two-one">
+                      <Panel
+                        title="近期开发任务"
+                        hint={`${tasks.length} 个任务 · 点击查看协作链路`}
+                      >
+                        {taskTable()}
+                      </Panel>
+                      <Panel title="分析边界" hint="可信度说明">
+                        <div className="insight">
+                          <div className="insight-icon">
+                            <Bot size={25} />
+                          </div>
+                          <h4>先看样本，再看结论</h4>
+                          <p>
+                            同类 AI / 非 AI 任务每组至少 5
+                            个，才展示耗时差异。小样本展示“—”，不生成效率提升结论。
+                          </p>
+                          <div className="mini-stats">
+                            <span>
+                              新发现缺陷<strong>{data.defects}</strong>
+                            </span>
+                            <span>
+                              完成任务返工次数<strong>{data.reworks}</strong>
+                            </span>
+                          </div>
+                          <button
+                            className="text-button"
+                            onClick={() => setPage(2)}
+                          >
+                            查看 AI 分析 <ArrowUpRight size={14} />
+                          </button>
+                        </div>
+                      </Panel>
+                    </div>
+                  </>
+                )}
+                {page === 1 && (
+                  <>
+                    {!project ? (
+                      <Panel title="选择项目">
+                        {projects.length ? (
+                          <div className="project-list">
+                            {projects.map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => setPid(String(p.id))}
+                              >
+                                <Boxes />
+                                <strong>{p.name}</strong>
+                                <span>
+                                  {p.repository}
+                                  <small className="source-role">
+                                    {sourceRole(p.repository)}
+                                  </small>
+                                </span>
+                                <ChevronRight />
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <Empty />
+                        )}
+                      </Panel>
+                    ) : (
+                      <>
+                        <Panel title={project.name} hint={project.mode}>
+                          <p>{project.description}</p>
+                          <p className="source-role">
+                            {sourceRole(project.repository)}
+                          </p>
+                          <p className="muted">
+                            {project.repository} · 最后导入：
+                            {project.imported_at ?? "尚未导入"}
+                          </p>
+                          {project.import_note && (
+                            <p className="warning-text">
+                              {project.import_note}
+                            </p>
+                          )}
+                          <div className="repo-stats">
+                            <span>{project.issues.length} Issues</span>
+                            <span>
+                              {project.pull_requests.length} Pull Requests
+                            </span>
+                            <span>{project.commits.length} Commits</span>
+                          </div>
+                        </Panel>
+                        <MetricCards
+                          data={data}
+                          keys={[
+                            "delivery_cycle",
+                            "pr_review_hours",
+                            "defect_density",
+                            "rework_rate",
+                          ]}
+                        />
+                        <div className="grid equal">
+                          <Panel title="Issue / PR / Commit 趋势">
+                            <Trend data={data} />
+                          </Panel>
+                          <Panel
+                            title="需求变更与交付周期"
+                            hint={`n = ${data.change_cycle.length}`}
+                          >
+                            <Chart
+                              label="需求变更次数与交付天数散点分布"
+                              option={{
+                                tooltip: {},
+                                grid: { left: 50, right: 25, bottom: 45 },
+                                xAxis: {
+                                  name: "变更次数",
+                                  type: "value",
+                                  minInterval: 1,
+                                  nameLocation: "middle",
+                                  nameGap: 25,
+                                },
+                                yAxis: { name: "交付天数", type: "value" },
+                                series: [
+                                  {
+                                    type: "scatter",
+                                    symbolSize: 12,
+                                    data: data.change_cycle.map((x) => [
+                                      x.changes,
+                                      x.days,
+                                    ]),
+                                  },
+                                ],
+                              }}
+                            />
+                          </Panel>
+                        </div>
+                        <Panel title="项目任务">{taskTable()}</Panel>
+                        <Panel title="仓库对象">
+                          <div className="grid equal">
+                            {(["issues", "pull_requests"] as const).map(
+                              (key) => (
+                                <div key={key}>
+                                  <h4>
+                                    {key === "issues"
+                                      ? "Issues"
+                                      : "Pull Requests"}
+                                  </h4>
+                                  {project[key].slice(0, 15).map((x) => (
+                                    <p key={x.id} className="repo-object">
+                                      <span>#{x.number}</span> {x.title}{" "}
+                                      <small>
+                                        {x.state} · {x.author}
+                                      </small>
+                                    </p>
+                                  ))}
+                                  {!project[key].length && (
+                                    <p className="muted">当前导入范围无记录</p>
+                                  )}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </Panel>
+                      </>
+                    )}
+                  </>
+                )}
+                {page === 2 && (
+                  <>
+                    <MetricCards
+                      data={data}
+                      keys={[
+                        "ai_task_share",
+                        "ai_acceptance_rate",
+                        "ai_avg_hours",
+                        "non_ai_avg_hours",
+                        "ai_time_saving",
+                        "first_test_pass_rate",
+                      ]}
+                    />
+                    <div className="grid equal">
+                      <Panel title="AI 工具使用分布" hint="按交互记录计数">
+                        <Donut
+                          data={data.tool_distribution}
+                          label="AI工具使用分布"
+                        />
+                      </Panel>
+                      <Panel title="AI 参与环节" hint="按交互记录计数">
+                        <Chart
+                          label="AI参与环节分布"
+                          option={{
+                            tooltip: { trigger: "axis" },
+                            grid: { left: 85, right: 25, top: 15, bottom: 25 },
+                            xAxis: { type: "value", minInterval: 1 },
+                            yAxis: {
+                              type: "category",
+                              data: Object.keys(data.stage_distribution),
+                            },
+                            series: [
+                              {
+                                type: "bar",
+                                barWidth: 14,
+                                itemStyle: { borderRadius: [0, 4, 4, 0] },
+                                data: Object.values(data.stage_distribution),
+                              },
+                            ],
+                          }}
+                        />
+                      </Panel>
+                    </div>
+                    <Panel title="同类型任务比较" hint="小时 · 完成任务队列">
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>任务类型</th>
+                              <th>AI 样本 / 均值</th>
+                              <th>非 AI 样本 / 均值</th>
+                              <th>时间差</th>
+                              <th>解释限制</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.task_types.map((t) => (
+                              <tr key={t.task_type}>
+                                <td>{t.task_type}</td>
+                                <td>
+                                  {t.ai_n} / {display(t.ai_hours)} h
+                                </td>
+                                <td>
+                                  {t.non_ai_n} / {display(t.non_ai_hours)} h
+                                </td>
+                                <td>
+                                  {display(t.saving_pct)}
+                                  {t.saving_pct !== null ? "%" : ""}
+                                </td>
+                                <td>
+                                  <span className="muted">{t.note}</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="footnote">
+                        正值表示观察到 AI
+                        组耗时更少，负值表示更多。任务复杂度、人员经验和选择偏差均未控制，不表示因果提升或统计显著性。
+                      </p>
+                    </Panel>
+                  </>
+                )}
+                {page === 3 && (
+                  <>
+                    {detail ? (
+                      <>
+                        <div className="detail-top">
+                          <button
+                            className="secondary"
+                            onClick={() => setDetail(null)}
+                          >
+                            ← 返回任务列表
+                          </button>
+                          <button
+                            className="primary"
+                            onClick={() => setModal("record")}
+                          >
+                            <Plus size={16} />
+                            更新任务 / 补充记录
+                          </button>
+                          <button
+                            className="secondary"
+                            onClick={() => setModal("ai")}
+                          >
+                            记录 AI 协作
+                          </button>
+                        </div>
+                        <Panel title={detail.title} hint={detail.task_type}>
+                          <p>{detail.description}</p>
+                          <div className="repo-stats">
+                            <span>
+                              预计 {detail.estimated_hours} h / 实际{" "}
+                              {display(detail.actual_hours)} h
+                            </span>
+                            <span>
+                              Prompt {detail.ai_summary.prompt_count} 次
+                            </span>
+                            <span>
+                              采纳 {detail.ai_summary.accepted_count} 条
+                            </span>
+                            <span>
+                              人工修改{" "}
+                              {detail.ai_summary.human_modification_count} 次
+                            </span>
+                            <span>
+                              缺陷 {detail.defect_count} / 返工{" "}
+                              {detail.rework_count}
+                            </span>
+                            <span>
+                              首次测试：
+                              {detail.first_test_passed === null
+                                ? "未记录"
+                                : detail.first_test_passed
+                                  ? "通过"
+                                  : "未通过"}
+                            </span>
+                          </div>
+                        </Panel>
+                        <div className="grid equal">
+                          <Panel title="完整历史协作链路" hint="UTC 时间">
+                            <div className="timeline">
+                              {detail.timeline.map((e, i) => (
+                                <div key={`${e.kind}-${e.id}-${i}`}>
+                                  <span className="timeline-dot" />
+                                  <small>
+                                    {e.at.replace("T", " ").slice(0, 19)} ·{" "}
+                                    {e.kind}
+                                  </small>
+                                  <h4>{e.title}</h4>
+                                </div>
+                              ))}
+                            </div>
+                          </Panel>
+                          <Panel title="AI 协作摘要" hint="仅保存脱敏摘要">
+                            {detail.interactions.length ? (
+                              detail.interactions.map((i) => (
+                                <article className="interaction" key={i.id}>
+                                  <span className="tag blue">{i.tool}</span>
+                                  <h4>{i.purpose}</h4>
+                                  <p>{i.prompt_summary}</p>
+                                  <p>建议：{i.suggestion_summary}</p>
+                                  <p>
+                                    采纳 {i.accepted_count}/{i.suggestion_count}{" "}
+                                    · {i.quality_result}
+                                  </p>
+                                  <small>
+                                    人工修正：{i.modification_notes || "未记录"}
+                                  </small>
+                                </article>
+                              ))
+                            ) : (
+                              <Empty text="此任务尚未记录 AI 协作。" />
+                            )}
+                          </Panel>
+                        </div>
+                      </>
+                    ) : (
+                      <Panel title="任务列表" hint="包含进行中与已完成任务">
+                        {taskTable()}
+                      </Panel>
+                    )}
+                  </>
+                )}
+                {page === 4 && (
+                  <>
+                    <Panel
+                      title="生成本周期研发复盘"
+                      hint="与前一等长时间窗口对比"
+                    >
+                      <p className="muted">
+                        报告包含指标、样本数量、前期变化、异常规则和代表性任务。没有可靠数据时明确标记未知。
+                      </p>
+                      <div className="detail-top">
+                        <button
+                          className="primary"
+                          disabled={busy}
+                          onClick={() => void generateReport()}
+                        >
+                          <Sparkles size={16} />
+                          生成 Markdown 周报
+                        </button>
+                        <button
+                          className="secondary"
+                          disabled={!report}
+                          onClick={download}
+                        >
+                          <ArrowDownToLine size={16} />
+                          下载 .md
+                        </button>
+                      </div>
+                    </Panel>
+                    {report && (
+                      <Panel
+                        title="周报预览"
+                        hint={`${start} → ${end}（结束不含）`}
+                      >
+                        <pre className="report">{report}</pre>
+                      </Panel>
+                    )}
+                    <Panel title="全部指标及口径提示">
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>指标</th>
+                              <th>结果</th>
+                              <th>样本量</th>
+                              <th>口径 / 限制</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(data.metrics).map(([k, m]) => (
+                              <tr key={k}>
+                                <td>{names[k]}</td>
+                                <td>
+                                  {display(m.value)} {m.unit}
+                                </td>
+                                <td>{m.n}</td>
+                                <td>{m.note || m.confidence}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Panel>
+                  </>
+                )}
+              </>
+            )
+          )}
+          <footer>
+            DevFlow AI <span>面向 AI 辅助开发的研发效能分析平台</span>
+            <small>UTC 时间 · 结束日期不含 · 描述性分析</small>
+          </footer>
+        </div>
+      </main>
+      {modal && (
+        <div className="modal-backdrop">
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="数据记录"
+          >
+            <div className="panel-title">
+              <h3>
+                {modal === "import"
+                  ? "接入 GitHub 公开仓库"
+                  : modal === "task"
+                    ? "新建开发任务"
+                    : modal === "ai"
+                      ? "记录 AI 辅助开发"
+                      : "更新任务与链路记录"}
+              </h3>
+              <button
+                className="icon-button"
+                onClick={() => setModal(null)}
+                aria-label="关闭窗口"
+              >
+                <X />
+              </button>
+            </div>
+            {error && (
+              <p role="alert" className="error">
+                {error}
+              </p>
+            )}
+            <Field label="写入 API Key（仅服务端启用时需要；仅保存在内存）">
+              <input
+                type="password"
+                autoComplete="off"
+                onChange={(e) => setWriteKey(e.target.value)}
+                placeholder="可留空，不是 GitHub Token"
+              />
+            </Field>
+            {modal === "import" ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  void action(
+                    () =>
+                      api("/github/import", {
+                        repository: f.get("repository"),
+                        max_pages: Number(f.get("max_pages")),
+                      }),
+                    "仓库已导入，请切换 Live 模式查看",
+                  );
+                }}
+              >
+                <Field label="仓库 owner/name">
+                  <input
+                    name="repository"
+                    required
+                    defaultValue="xxu94420-commits/mbrset-dissertation-code"
+                    pattern="[\w.-]+/[\w.-]+"
+                  />
+                </Field>
+                <Field label="每类对象最大页数（每页 100 条）">
+                  <input
+                    name="max_pages"
+                    type="number"
+                    min="1"
+                    max="10"
+                    defaultValue="2"
+                  />
+                </Field>
+                <p className="footnote">
+                  Token
+                  仅从后端环境变量读取。导入受分页上限影响，会显示覆盖范围；重复导入更新现有数据。
+                </p>
+                <button className="primary" disabled={busy}>
+                  {busy ? "导入中…" : "开始导入"}
+                </button>
+              </form>
+            ) : modal === "task" ? (
+              <TaskForm
+                projects={projects}
+                pid={pid}
+                busy={busy}
+                submit={(body) =>
+                  action(() => api("/tasks", body), "任务已创建")
+                }
+              />
+            ) : modal === "ai" ? (
+              <AIForm
+                tasks={tasks}
+                selected={detail?.id}
+                busy={busy}
+                submit={(body) =>
+                  action(() => api("/interactions", body), "AI 记录已保存")
+                }
+              />
+            ) : (
+              detail && (
+                <RecordForm
+                  task={detail}
+                  busy={busy}
+                  submit={(path, body, method) =>
+                    action(
+                      () => api(path, body, method),
+                      "记录已保存；重新打开任务可查看更新",
+                    )
+                  }
+                />
+              )
+            )}
+          </section>
+        </div>
+      )}
+    </div>
+  );
 }
 
-function TaskForm({projects,pid,busy,submit}: {projects:Project[];pid:string;busy:boolean;submit:(body:unknown)=>Promise<void>}) {
-  const [selected,setSelected]=useState(pid||String(projects[0]?.id??''));
-  const [entities,setEntities]=useState<ProjectDetail|null>(null);
-  useEffect(()=>{let active=true;setEntities(null);if(selected)api<ProjectDetail>(`/projects/${selected}`).then(x=>{if(active)setEntities(x);}).catch(()=>{});return()=>{active=false;};},[selected]);
-  function onSubmit(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);void submit({project_id:Number(selected),title:f.get('title'),description:f.get('description'),task_type:f.get('task_type'),estimated_hours:Number(f.get('estimated_hours')),uses_ai:f.get('uses_ai')==='on',requirement_id:f.get('requirement_id')?Number(f.get('requirement_id')):null,issue_id:f.get('issue_id')?Number(f.get('issue_id')):null});}
-  function options(rows:Entity[]){return <><option value="">不关联</option>{rows.map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</>;}
-  return <form onSubmit={onSubmit}><Field label="所属项目"><select required value={selected} onChange={e=>setSelected(e.target.value)}><option value="">请选择</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></Field><Field label="任务标题"><input name="title" required maxLength={200}/></Field><Field label="描述"><textarea name="description" maxLength={2000}/></Field><div className="form-grid"><Field label="任务类型"><select name="task_type">{types.map(t=><option key={t}>{t}</option>)}</select></Field><Field label="预计耗时 / 小时"><input name="estimated_hours" type="number" min="0" step="0.1" required/></Field><Field label="关联需求"><select key={`r-${selected}`} name="requirement_id">{options(entities?.requirements??[])}</select></Field><Field label="关联 Issue"><select key={`i-${selected}`} name="issue_id">{options(entities?.issues??[])}</select></Field></div><label className="checkbox"><input type="checkbox" name="uses_ai"/>使用 AI Coding</label><button className="primary" disabled={busy||!selected}>创建任务</button></form>;
+function TaskForm({
+  projects,
+  pid,
+  busy,
+  submit,
+}: {
+  projects: Project[];
+  pid: string;
+  busy: boolean;
+  submit: (body: unknown) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState(
+    pid || String(projects[0]?.id ?? ""),
+  );
+  const [entities, setEntities] = useState<ProjectDetail | null>(null);
+  useEffect(() => {
+    let active = true;
+    setEntities(null);
+    if (selected)
+      api<ProjectDetail>(`/projects/${selected}`)
+        .then((x) => {
+          if (active) setEntities(x);
+        })
+        .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [selected]);
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    void submit({
+      project_id: Number(selected),
+      title: f.get("title"),
+      description: f.get("description"),
+      task_type: f.get("task_type"),
+      estimated_hours: Number(f.get("estimated_hours")),
+      uses_ai: f.get("uses_ai") === "on",
+      requirement_id: f.get("requirement_id")
+        ? Number(f.get("requirement_id"))
+        : null,
+      issue_id: f.get("issue_id") ? Number(f.get("issue_id")) : null,
+    });
+  }
+  function options(rows: Entity[]) {
+    return (
+      <>
+        <option value="">不关联</option>
+        {rows.map((x) => (
+          <option key={x.id} value={x.id}>
+            {x.title}
+          </option>
+        ))}
+      </>
+    );
+  }
+  return (
+    <form onSubmit={onSubmit}>
+      <Field label="所属项目">
+        <select
+          required
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+        >
+          <option value="">请选择</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="任务标题">
+        <input name="title" required maxLength={200} />
+      </Field>
+      <Field label="描述">
+        <textarea name="description" maxLength={2000} />
+      </Field>
+      <div className="form-grid">
+        <Field label="任务类型">
+          <select name="task_type">
+            {types.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="预计耗时 / 小时">
+          <input
+            name="estimated_hours"
+            type="number"
+            min="0"
+            step="0.1"
+            required
+          />
+        </Field>
+        <Field label="关联需求">
+          <select key={`r-${selected}`} name="requirement_id">
+            {options(entities?.requirements ?? [])}
+          </select>
+        </Field>
+        <Field label="关联 Issue">
+          <select key={`i-${selected}`} name="issue_id">
+            {options(entities?.issues ?? [])}
+          </select>
+        </Field>
+      </div>
+      <label className="checkbox">
+        <input type="checkbox" name="uses_ai" />
+        使用 AI Coding
+      </label>
+      <button className="primary" disabled={busy || !selected}>
+        创建任务
+      </button>
+    </form>
+  );
 }
-function AIForm({tasks,selected,busy,submit}: {tasks:Task[];selected?:number;busy:boolean;submit:(body:unknown)=>Promise<void>}) {
-  function onSubmit(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const body:Record<string,unknown>=Object.fromEntries(f);for(const k of ['task_id','prompt_count','suggestion_count','accepted_count','human_modification_count','estimated_before_hours','actual_hours'])body[k]=Number(body[k]);void submit(body);}
-  return <form onSubmit={onSubmit}><p className="warning-text">只记录脱敏摘要；不要提交密钥、个人隐私或完整敏感 Prompt。</p><Field label="关联任务"><select name="task_id" required defaultValue={selected??''}><option value="">请选择任务</option>{tasks.map(t=><option key={t.id} value={t.id}>{t.title}</option>)}</select></Field><div className="form-grid"><Field label="AI 工具"><input name="tool" list="tools" required defaultValue="Codex" maxLength={100}/><datalist id="tools"><option>Codex</option><option>Copilot</option><option>其他工具</option></datalist></Field><Field label="参与环节"><select name="stage">{types.map(t=><option key={t}>{t}</option>)}</select></Field></div>{[['purpose','使用目的',500],['prompt_summary','Prompt 脱敏摘要',1000],['suggestion_summary','AI 建议摘要',1000],['modification_notes','人工修改说明',1000],['quality_result','质量结果',500],['notes','备注',1000]].map(([key,label,max])=><Field key={key} label={String(label)}><textarea name={String(key)} maxLength={Number(max)} required={key==='purpose'||key==='prompt_summary'}/></Field>)}<div className="form-grid">{[['prompt_count','Prompt 次数',1],['suggestion_count','建议数量',1],['accepted_count','采纳数量',0],['human_modification_count','人工修改次数',0],['estimated_before_hours','使用前预计时间 / h',1],['actual_hours','实际时间 / h',1]].map(([key,label,value])=><Field key={key} label={String(label)}><input name={String(key)} type="number" min={key==='prompt_count'?1:0} step={String(key).includes('hours')?'0.1':'1'} required defaultValue={value}/></Field>)}</div><button className="primary" disabled={busy||!tasks.length}>保存脱敏记录</button></form>;
+function AIForm({
+  tasks,
+  selected,
+  busy,
+  submit,
+}: {
+  tasks: Task[];
+  selected?: number;
+  busy: boolean;
+  submit: (body: unknown) => Promise<void>;
+}) {
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const body: Record<string, unknown> = Object.fromEntries(f);
+    for (const k of [
+      "task_id",
+      "prompt_count",
+      "suggestion_count",
+      "accepted_count",
+      "human_modification_count",
+      "estimated_before_hours",
+      "actual_hours",
+    ])
+      body[k] = Number(body[k]);
+    void submit(body);
+  }
+  return (
+    <form onSubmit={onSubmit}>
+      <p className="warning-text">
+        只记录脱敏摘要；不要提交密钥、个人隐私或完整敏感 Prompt。
+      </p>
+      <Field label="关联任务">
+        <select name="task_id" required defaultValue={selected ?? ""}>
+          <option value="">请选择任务</option>
+          {tasks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.title}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="form-grid">
+        <Field label="AI 工具">
+          <input
+            name="tool"
+            list="tools"
+            required
+            defaultValue="Codex"
+            maxLength={100}
+          />
+          <datalist id="tools">
+            <option>Codex</option>
+            <option>Copilot</option>
+            <option>其他工具</option>
+          </datalist>
+        </Field>
+        <Field label="参与环节">
+          <select name="stage">
+            {types.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      {[
+        ["purpose", "使用目的", 500],
+        ["prompt_summary", "Prompt 脱敏摘要", 1000],
+        ["suggestion_summary", "AI 建议摘要", 1000],
+        ["modification_notes", "人工修改说明", 1000],
+        ["quality_result", "质量结果", 500],
+        ["notes", "备注", 1000],
+      ].map(([key, label, max]) => (
+        <Field key={key} label={String(label)}>
+          <textarea
+            name={String(key)}
+            maxLength={Number(max)}
+            required={key === "purpose" || key === "prompt_summary"}
+          />
+        </Field>
+      ))}
+      <div className="form-grid">
+        {[
+          ["prompt_count", "Prompt 次数", 1],
+          ["suggestion_count", "建议数量", 1],
+          ["accepted_count", "采纳数量", 0],
+          ["human_modification_count", "人工修改次数", 0],
+          ["estimated_before_hours", "使用前预计时间 / h", 1],
+          ["actual_hours", "实际时间 / h", 1],
+        ].map(([key, label, value]) => (
+          <Field key={key} label={String(label)}>
+            <input
+              name={String(key)}
+              type="number"
+              min={key === "prompt_count" ? 1 : 0}
+              step={String(key).includes("hours") ? "0.1" : "1"}
+              required
+              defaultValue={value}
+            />
+          </Field>
+        ))}
+      </div>
+      <button className="primary" disabled={busy || !tasks.length}>
+        保存脱敏记录
+      </button>
+    </form>
+  );
 }
-function RecordForm({task,busy,submit}: {task:Detail;busy:boolean;submit:(path:string,body:unknown,method?:string)=>Promise<void>}) {
-  const [kind,setKind]=useState('task');
-  function onSubmit(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const values=Object.fromEntries(f);let path=`/${kind}`,method='POST';let body:Record<string,unknown>={...values,task_id:task.id};if(kind==='task'){path=`/tasks/${task.id}`;method='PUT';body={project_id:task.project_id,requirement_id:task.requirement_id,issue_id:task.issue_id,title:task.title,description:task.description,task_type:task.task_type,uses_ai:task.uses_ai,created_at:task.created_at,estimated_hours:task.estimated_hours,actual_hours:Number(values.actual_hours),rework_count:Number(values.rework_count),completed_at:values.completed==='on'?new Date().toISOString():task.completed_at};}if(kind==='tests'){body.passed=Number(values.passed);body.total=Number(values.total);}if(kind==='links'){path=`/tasks/${task.id}/links`;method='PUT';body={commit_ids:String(values.commit_ids).split(',').filter(Boolean).map(Number),pr_ids:String(values.pr_ids).split(',').filter(Boolean).map(Number)};}void submit(path,body,method);}
-  return <form onSubmit={onSubmit}><Field label="记录类型"><select value={kind} onChange={e=>setKind(e.target.value)}><option value="task">任务耗时 / 完成 / 返工</option><option value="tests">测试结果</option><option value="defects">缺陷</option><option value="retrospectives">复盘</option><option value="links">关联 Commit / PR</option></select></Field>{kind==='task'?<><Field label="实际耗时 / 小时"><input name="actual_hours" type="number" step="0.1" min="0" defaultValue={task.actual_hours??0} required/></Field><Field label="返工次数"><input name="rework_count" type="number" min="0" defaultValue={task.rework_count} required/></Field><label className="checkbox"><input name="completed" type="checkbox"/>标记为现在完成</label></>:kind==='tests'?<><Field label="测试套件名称"><input name="name" required/></Field><Field label="通过用例数"><input name="passed" type="number" min="0" required/></Field><Field label="总用例数"><input name="total" type="number" min="1" required/></Field></>:kind==='defects'?<><Field label="缺陷标题"><input name="title" required/></Field><Field label="严重程度"><select name="severity"><option>medium</option><option>low</option><option>high</option><option>critical</option></select></Field></>:kind==='retrospectives'?<><Field label="复盘摘要"><textarea name="summary" required maxLength={2000}/></Field><Field label="改进行动"><textarea name="action_item" required maxLength={1000}/></Field></>:<><p className="footnote">填写本平台数据库 ID（非 GitHub 编号），多个用英文逗号分隔。项目 API 返回对象 ID。</p><Field label="Commit IDs"><input name="commit_ids" pattern="[0-9, ]*"/></Field><Field label="PR IDs"><input name="pr_ids" pattern="[0-9, ]*"/></Field></>}<button className="primary" disabled={busy}>保存记录</button></form>;
+function RecordForm({
+  task,
+  busy,
+  submit,
+}: {
+  task: Detail;
+  busy: boolean;
+  submit: (path: string, body: unknown, method?: string) => Promise<void>;
+}) {
+  const [kind, setKind] = useState("task");
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const values = Object.fromEntries(f);
+    let path = `/${kind}`,
+      method = "POST";
+    let body: Record<string, unknown> = { ...values, task_id: task.id };
+    if (kind === "task") {
+      path = `/tasks/${task.id}`;
+      method = "PUT";
+      body = {
+        project_id: task.project_id,
+        requirement_id: task.requirement_id,
+        issue_id: task.issue_id,
+        title: task.title,
+        description: task.description,
+        task_type: task.task_type,
+        uses_ai: task.uses_ai,
+        created_at: task.created_at,
+        estimated_hours: task.estimated_hours,
+        actual_hours: Number(values.actual_hours),
+        rework_count: Number(values.rework_count),
+        completed_at:
+          values.completed === "on"
+            ? new Date().toISOString()
+            : task.completed_at,
+      };
+    }
+    if (kind === "tests") {
+      body.passed = Number(values.passed);
+      body.total = Number(values.total);
+    }
+    if (kind === "links") {
+      path = `/tasks/${task.id}/links`;
+      method = "PUT";
+      body = {
+        commit_ids: String(values.commit_ids)
+          .split(",")
+          .filter(Boolean)
+          .map(Number),
+        pr_ids: String(values.pr_ids).split(",").filter(Boolean).map(Number),
+      };
+    }
+    void submit(path, body, method);
+  }
+  return (
+    <form onSubmit={onSubmit}>
+      <Field label="记录类型">
+        <select value={kind} onChange={(e) => setKind(e.target.value)}>
+          <option value="task">任务耗时 / 完成 / 返工</option>
+          <option value="tests">测试结果</option>
+          <option value="defects">缺陷</option>
+          <option value="retrospectives">复盘</option>
+          <option value="links">关联 Commit / PR</option>
+        </select>
+      </Field>
+      {kind === "task" ? (
+        <>
+          <Field label="实际耗时 / 小时">
+            <input
+              name="actual_hours"
+              type="number"
+              step="0.1"
+              min="0"
+              defaultValue={task.actual_hours ?? 0}
+              required
+            />
+          </Field>
+          <Field label="返工次数">
+            <input
+              name="rework_count"
+              type="number"
+              min="0"
+              defaultValue={task.rework_count}
+              required
+            />
+          </Field>
+          <label className="checkbox">
+            <input name="completed" type="checkbox" />
+            标记为现在完成
+          </label>
+        </>
+      ) : kind === "tests" ? (
+        <>
+          <Field label="测试套件名称">
+            <input name="name" required />
+          </Field>
+          <Field label="通过用例数">
+            <input name="passed" type="number" min="0" required />
+          </Field>
+          <Field label="总用例数">
+            <input name="total" type="number" min="1" required />
+          </Field>
+        </>
+      ) : kind === "defects" ? (
+        <>
+          <Field label="缺陷标题">
+            <input name="title" required />
+          </Field>
+          <Field label="严重程度">
+            <select name="severity">
+              <option>medium</option>
+              <option>low</option>
+              <option>high</option>
+              <option>critical</option>
+            </select>
+          </Field>
+        </>
+      ) : kind === "retrospectives" ? (
+        <>
+          <Field label="复盘摘要">
+            <textarea name="summary" required maxLength={2000} />
+          </Field>
+          <Field label="改进行动">
+            <textarea name="action_item" required maxLength={1000} />
+          </Field>
+        </>
+      ) : (
+        <>
+          <p className="footnote">
+            填写本平台数据库 ID（非 GitHub 编号），多个用英文逗号分隔。项目 API
+            返回对象 ID。
+          </p>
+          <Field label="Commit IDs">
+            <input name="commit_ids" pattern="[0-9, ]*" />
+          </Field>
+          <Field label="PR IDs">
+            <input name="pr_ids" pattern="[0-9, ]*" />
+          </Field>
+        </>
+      )}
+      <button className="primary" disabled={busy}>
+        保存记录
+      </button>
+    </form>
+  );
 }
