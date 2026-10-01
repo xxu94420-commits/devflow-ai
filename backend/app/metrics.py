@@ -60,6 +60,14 @@ def analyze(db, mode, start, end, project_id=None):
     for t in sorted(all_tests, key=lambda t: (t.created_at, t.id)):
         first_tests.setdefault(t.task_id, t)
     first = [t for t in first_tests.values() if within(t.created_at)]
+    uncertain_first = {
+        run.task_id
+        for run in project_rows(m.CIRun)
+        if run.task_id in first_tests
+        and run.evidence_status != "available"
+        and run.created_at <= first_tests[run.task_id].created_at
+    }
+    first = [test for test in first if test.task_id not in uncertain_first]
     all_defects = task_rows(m.Defect)
     defects = [d for d in all_defects if within(d.created_at)]
     cohort_defects = [
@@ -144,9 +152,13 @@ def analyze(db, mode, start, end, project_id=None):
             ratio(sum(t.passed for t in tests), sum(t.total for t in tests)),
             sum(t.total for t in tests),
             "%",
+            "人工记录与已关联完整CI报告；JUnit跳过不进入分母",
         ),
         "first_test_pass_rate": metric(
-            ratio(sum(t.passed == t.total for t in first), len(first)), len(first), "%"
+            ratio(sum(t.passed == t.total for t in first), len(first)),
+            len(first),
+            "%",
+            "最早可观测测试；更早CI证据缺失的任务不计入；非全量仓库历史",
         ),
         "defect_density": metric(
             round(len(cohort_defects) / len(tasks), 3) if tasks else None,

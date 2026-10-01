@@ -30,6 +30,8 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     imported_at: Mapped[datetime | None] = mapped_column(DateTime)
     import_note: Mapped[str] = mapped_column(default="")
+    ci_synced_at: Mapped[datetime | None] = mapped_column(DateTime)
+    ci_sync_note: Mapped[str] = mapped_column(default="")
 
 
 class Requirement(Base):

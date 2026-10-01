@@ -145,3 +145,12 @@ class LinksIn(Input):
 class ImportIn(Input):
     repository: Annotated[str, Field(pattern=r"^[\w.-]+/[\w.-]+$", max_length=300)]
     max_pages: Annotated[int, Field(ge=1, le=10)] = 2
+
+
+class CISyncIn(Input):
+    project_id: int
+    max_runs: int = Field(default=3, ge=1, le=5)
+
+
+class CIAssociationIn(Input):
+    task_id: int | None = None
