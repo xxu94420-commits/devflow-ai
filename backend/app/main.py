@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -356,3 +356,21 @@ def get_report(
     from .reports import report
 
     return report(db, mode, *dates, project_id)
+
+
+@app.get("/api/reports/download")
+def download_report(
+    mode: Literal["live", "demo"] = "demo",
+    project_id: int | None = None,
+    dates: tuple = Depends(window),
+    db: Session = Depends(get_db),
+):
+    from .reports import report
+
+    markdown = report(db, mode, *dates, project_id)["markdown"]
+    filename = f"devflow-{mode}-{dates[0].date().isoformat()}.md"
+    return Response(
+        markdown,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
