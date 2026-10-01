@@ -40,9 +40,58 @@ class Requirement(Base):
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(default="")
+    acceptance_criteria: Mapped[str] = mapped_column(default="")
+    version: Mapped[int] = mapped_column(default=1)
     change_count: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class RequirementRevision(Base):
+    __tablename__ = "requirement_revisions"
+    __table_args__ = (UniqueConstraint("requirement_id", "version"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    requirement_id: Mapped[int] = mapped_column(
+        ForeignKey("requirements.id"), index=True
+    )
+    version: Mapped[int]
+    snapshot: Mapped[dict] = mapped_column(JSON)
+    reason: Mapped[str] = mapped_column(default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class RequirementReview(Base):
+    __tablename__ = "requirement_reviews"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    requirement_id: Mapped[int] = mapped_column(
+        ForeignKey("requirements.id"), index=True
+    )
+    request_key: Mapped[str] = mapped_column(String(36), unique=True)
+    snapshot: Mapped[dict] = mapped_column(JSON)
+    input_hash: Mapped[str] = mapped_column(String(64))
+    prompt_version: Mapped[str] = mapped_column(String(40))
+    model: Mapped[str] = mapped_column(String(200))
+    provider: Mapped[str] = mapped_column(String(300))
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    error_code: Mapped[str] = mapped_column(default="")
+    findings: Mapped[list] = mapped_column(JSON, default=list)
+    usage: Mapped[dict] = mapped_column(JSON, default=dict)
+    duration_ms: Mapped[int | None]
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class ReviewDecision(Base):
+    __tablename__ = "review_decisions"
+    __table_args__ = (UniqueConstraint("review_id", "finding_index"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    review_id: Mapped[int] = mapped_column(
+        ForeignKey("requirement_reviews.id"), index=True
+    )
+    finding_index: Mapped[int]
+    decision: Mapped[str] = mapped_column(String(20))
+    reason: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
 class Issue(Base):
