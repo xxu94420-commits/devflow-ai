@@ -57,3 +57,4 @@
 - 本地 ESLint 误检查 `.vite` 生成代码，修正忽略规则；Windows checkout 换行由Prettier规范化，未改动相关业务文件内容。
 - Git直接连接443多次超时，确认成功HTTP请求经过本机代理后，仅对推送指定同一代理恢复传输，未修改全局Git设置。
 - Render账号由用户本人登录。托管配置和实际部署验证分别记录，未预先宣称成功。
+- 最新分支CI通过后以0c2308d合并PR #11，主分支CI也通过；Render实际部署该提交并提供HTTPS网址。公开HTTP验收通过，首次Live采集6 Issues / 5 PRs / 18 Commits；README与截图在确认公网成功后补充。

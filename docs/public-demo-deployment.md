@@ -1,6 +1,8 @@
 # 公网只读演示
 
-关联 Issue #10 / ADR 004。仓库提供可部署配置；配置文件本身不代表站点已经上线。
+关联 Issue #10 / PR #11 / ADR 004。2026-10-01已部署并完成公网验收：**https://devflow-ai-demo.onrender.com**。
+
+运行提交：`0c2308d79979c1e953eb5d7dac7fe1bd940b307f`。Render服务实际显示 Docker / Free；后续文档提交不改变已运行的程序版本。
 
 ## Render 免费 Web Service
 
@@ -45,3 +47,11 @@ docker run --rm -p 127.0.0.1:8081:8000 devflow-public
 - Demo 标记明确；Live 仅展示实际导入内容，缺少样本时不生成效率结论。
 
 GitHub Actions `public-demo-smoke` 会实际构建并运行此镜像，验证上述基础HTTP契约；公网 HTTPS 和浏览器体验需要部署后单独验收。
+
+可复现已执行的公网HTTP验收（要求先安装backend依赖）：
+
+```sh
+python scripts/check_public_demo.py https://devflow-ai-demo.onrender.com
+```
+
+脚本先检查服务宣告只读，再发送应被拒绝的写请求；不得对其他工作空间运行。首次验收结果：42个模拟任务、1个真实仓库，主页/指标/详情/报告通过，写入返回403且读取数据保持一致，未知及环境文件路径返回404。

@@ -2,6 +2,10 @@
 
 **面向AI辅助开发的研发效能分析平台** · 原创个人作品集项目
 
+**[打开公网只读演示](https://devflow-ai-demo.onrender.com)** · [GitHub Actions](https://github.com/xxu94420-commits/devflow-ai/actions)
+
+支持查看指标、筛选项目与日期、浏览协作链路和下载周报；不接受访客写入。Render免费实例休眠后首次访问可能等待约一分钟。Demo明确标记为模拟数据，Live展示本项目公开仓库的启动时快照。
+
 从“提交了多少代码”转向“需求如何交付、AI参与了什么、验证与返工发生在哪里”。本平台连接GitHub公开研发元数据与人工AI记录，提供有明确样本量、分母和局限的描述性分析，不宣称未经验证的效率提升。
 
 ![研发效能总览（synthetic/demo data）](docs/screenshots/dashboard.png)
@@ -58,7 +62,7 @@ compose.yaml
 
 ## 快速启动：Docker
 
-公开只读版本另提供根目录 `Dockerfile` 和 `render.yaml`，保留筛选、链路浏览与报告下载，服务端拒绝全部写操作。部署步骤、数据来源和免费实例限制见 [公网演示部署说明](docs/public-demo-deployment.md)。仅有部署配置不代表站点已上线，实际演示地址将在部署验收后补充。
+公开只读版本已部署并验收，另提供根目录 `Dockerfile` 和 `render.yaml`。部署步骤、数据来源和免费实例限制见 [公网演示部署说明](docs/public-demo-deployment.md)，[实际公网截图](docs/screenshots/public-demo.png)展示只读入口和数据标记。
 
 需要Docker Engine/Desktop和Compose插件。从仓库根目录执行：
 

@@ -35,3 +35,13 @@
 - 浏览器任务创建、AI保存、统计聚合、时间线更新和Live来源说明实际通过，浏览器error日志为空。
 - 最终主分支CI以仓库Actions中的实际状态为准；不将早先提交的成功当作后续代码已验证。
 - 最终功能提交`c35daf9`的[PR验证](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36850593007)与[push验证](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36850588460)均success，包含24项后端测试、3项前端测试、格式/构建/迁移和Docker冒烟。
+
+## 2026-10-01 公网只读演示验收
+
+- 新增只读边界、初始化失败/超时验证后，后端31项测试通过；前端仍3项通过。Ruff、Black、ESLint、Prettier、TypeScript与生产构建通过。
+- PR #11分支提交26c469b的[CI](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36855429199)和合并提交0c2308d的[主分支CI](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36855614811)均success，包含新增public-demo-smoke作业的真实容器构建与运行。
+- 用户本人登录Render；创建一个Docker / Free服务，实际部署0c2308d，公网地址为 https://devflow-ai-demo.onrender.com。
+- `scripts/check_public_demo.py` 实际对公网执行通过：主页、指标、项目/任务详情、Markdown下载；7种写请求返回403，任务/项目响应不变；`/.env`及未知API返回404。
+- 公网浏览器实际呈现只读标识、42个模拟任务及图表，截图保存为 `docs/screenshots/public-demo.png`。本地同构预览实际查看项目筛选、任务完整时间线与报告预览；不将本地浏览器检查混称为全部公网交互已逐项检查。
+- 公网Live实际读取本项目仓库，采集时间UTC `2026-10-01T11:31:36.644843`，快照为6 Issues / 5 PRs / 18 Commits；此为当时采集结果，不是持续同步或历史业务规模。无毕业论文仓库或本地人工记录上传。
+- 未声称浏览器文件下载已落盘：验证的是HTTP附件响应与正文。保留冷启动、临时磁盘和上游限流限制。
