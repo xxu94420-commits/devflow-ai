@@ -10,6 +10,9 @@
 - 浏览器实际打开独立验收库的真实任务，确认Issue、CI运行、测试时间线、41/3分套件计数、来源链接和SHA256；只读页无同步和关联编辑入口。截图为 `docs/screenshots/ci-evidence.png`，不是公网已配置凭据的证据。
 - Windows Black多worker执行曾挂起，改为单worker后完成；不将环境进程问题描述为业务测试失败。
 - 文档提交0708ca8的push检查成功，但PR run 36896069176首次attempt在拉取nginx镜像元数据时遇到Docker Hub 502；该次后端、前端与公网容器作业通过。保留失败记录并重跑完整工作流，不把上游故障伪造成测试用例失败。
+- 上述run完整重跑通过；最终分支0fc7fb0的push/PR检查均success。合并efc0609的[主分支CI](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36896719225)也通过，包含迁移升级、check、降级、再升级。
+- Render Blueprint审核差异只有新增CI_SYNC_INTERVAL_SECONDS=3600；实际部署efc0609，服务状态Live、Docker/Free。公网验收脚本通过：42个模拟任务、1个真实仓库，9种写请求拒绝且数据不变，新CI读接口正常。
+- 公网首轮CI同步UTC 2026-10-01T17:10:09.141987，共3条真实运行；未配置artifact权限，passed/failed均null。浏览器真实确认60分钟周期、权限提示、GitHub来源和未知计数，未声称公网已获取完整JUnit。
 
 ## 已完成的检查
 

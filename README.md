@@ -12,6 +12,8 @@
 
 公网版本：[只读部署说明与验收](docs/public-demo-deployment.md)。自动测试链路：[配置、数据口径和真实验证](docs/ci-test-evidence.md)。未配置 GitHub Actions 读取权限时，公网仅展示运行状态，用例数保持未知。
 
+2026-10-02 已上线自动测试证据页：**Live → 项目详情 → devflow-ai → 自动测试证据**。当前每60分钟采集，实例休眠期间暂停；[公网页面截图](docs/screenshots/public-ci-evidence.png)。
+
 <details>
 <summary>查看真实 CI 回流截图（本地独立验收库，非公网数据）</summary>
 

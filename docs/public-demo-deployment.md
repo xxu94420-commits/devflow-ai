@@ -2,7 +2,9 @@
 
 关联 Issue #10 / PR #11 / ADR 004。2026-10-01已部署并完成公网验收：**https://devflow-ai-demo.onrender.com**。
 
-运行提交：`0c2308d79979c1e953eb5d7dac7fe1bd940b307f`。Render服务实际显示 Docker / Free；后续文档提交不改变已运行的程序版本。
+当前运行提交：`efc0609ab748227c4036127542a9753816b98f01`（PR #13），2026-10-02完成新版验收。首次部署为 `0c2308d`（PR #11）。Render服务仍为 Docker / Free；后续文档提交不改变已运行的程序版本。
+
+新版实际验收：`/api/ci/status` 返回3600秒周期、artifact权限未配置；公开采集3条真实运行，计数保持null。浏览器项目详情显示采集时间、来源链接和权限提示，截图为 `docs/screenshots/public-ci-evidence.png`。完整JUnit回流仅在本地独立验收库验证，未上传本机凭据或数据库。
 
 ## Render 免费 Web Service
 
