@@ -16,3 +16,4 @@ dist/
 data/
 test-results/
 playwright-report/
+reports/

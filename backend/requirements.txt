@@ -9,3 +9,4 @@ psycopg[binary]==3.2.9
 pytest==8.3.5
 ruff==0.11.9
 black==25.1.0
+defusedxml==0.7.1
