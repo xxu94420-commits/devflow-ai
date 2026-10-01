@@ -334,3 +334,25 @@ def metrics(
     db: Session = Depends(get_db),
 ):
     return analyze(db, mode, *dates, project_id)
+
+
+@app.post("/api/github/import", dependencies=[Depends(write_access)])
+def github_import(data: s.ImportIn, db: Session = Depends(get_db)):
+    from .github import ImportFailure, import_repository
+
+    try:
+        return import_repository(db, data.repository, data.max_pages)
+    except ImportFailure as exc:
+        raise HTTPException(exc.status, exc.message) from None
+
+
+@app.get("/api/reports")
+def get_report(
+    mode: Literal["live", "demo"] = "demo",
+    project_id: int | None = None,
+    dates: tuple = Depends(window),
+    db: Session = Depends(get_db),
+):
+    from .reports import report
+
+    return report(db, mode, *dates, project_id)
