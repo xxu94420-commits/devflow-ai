@@ -1,0 +1,6 @@
+{
+  "title": "feat: React analytics workspace with task and AI forms",
+  "head": "codex/dashboard",
+  "base": "codex/collaboration-api",
+  "body": "新增五页工作台、ECharts趋势/分布图、demo/live及日期筛选、任务和AI摘要表单。所有指标显示样本量，未知值不替换为0。\n\n验证：TypeScript、ESLint通过；Vite生产构建通过；Vitest 3 passed。Windows沙箱阻止esbuild读取父目录，获授权后完成构建。当前ECharts包有大体积警告，后续优化。GitHub导入和周报按钮将在后续功能分支完成。\n\nRefs #4"
+}
