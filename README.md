@@ -10,6 +10,17 @@
 
 ![研发效能总览（synthetic/demo data）](docs/screenshots/dashboard.png)
 
+公网版本：[只读部署说明与验收](docs/public-demo-deployment.md)。自动测试链路：[配置、数据口径和真实验证](docs/ci-test-evidence.md)。未配置 GitHub Actions 读取权限时，公网仅展示运行状态，用例数保持未知。
+
+<details>
+<summary>查看真实 CI 回流截图（本地独立验收库，非公网数据）</summary>
+
+![真实 Actions 报告关联任务](docs/screenshots/ci-evidence.png)
+
+此图为第一阶段真实运行：41 项后端 + 3 项前端测试，共 44 项；不代表当前测试总数。来源运行、采集时间、报告校验值均可追溯。
+
+</details>
+
 ## 解决什么问题
 
 - GitHub无法直接回答AI建议是否采纳、人工改了几轮、是否产生返工。
