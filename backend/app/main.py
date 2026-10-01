@@ -46,7 +46,16 @@ app.add_middleware(
 @app.middleware("http")
 async def read_only_guard(request: Request, call_next):
     # Enforce at the HTTP boundary, including future routes and valid write keys.
-    if get_settings().read_only and request.method not in {"GET", "HEAD", "OPTIONS"}:
+    trial = (
+        get_settings().public_review_enabled
+        and request.method == "POST"
+        and request.url.path == "/api/review/trial"
+    )
+    if (
+        get_settings().read_only
+        and request.method not in {"GET", "HEAD", "OPTIONS"}
+        and not trial
+    ):
         return JSONResponse(
             status_code=403,
             content={"detail": "公开演示为只读模式，不接受写入或仓库导入"},
@@ -168,15 +177,12 @@ def create_requirement(data: s.RequirementIn, db: Session = Depends(get_db)):
 
 @app.put("/api/requirements/{ident}", dependencies=[Depends(write_access)])
 def update_requirement(
-    ident: int, data: s.RequirementIn, db: Session = Depends(get_db)
+    ident: int, data: s.RequirementUpdate, db: Session = Depends(get_db)
 ):
+    from .requirement_reviews import edit_requirement
+
     obj = require(db, m.Requirement, ident)
-    if data.project_id != obj.project_id:
-        raise HTTPException(422, "不能改变需求的项目")
-    for key, value in data.model_dump().items():
-        setattr(obj, key, value)
-    db.commit()
-    return row(obj)
+    return edit_requirement(db, obj, data)
 
 
 @app.put(
@@ -493,6 +499,44 @@ def associate_ci(run_id: int, data: s.CIAssociationIn, db: Session = Depends(get
 
 
 # API routes must be registered before the root static mount. The UI uses no
+from . import requirement_reviews as reviews  # noqa: E402
+from . import review_trial  # noqa: E402
+
+app.include_router(reviews.router)
+
+
+@app.get("/api/review/trial")
+def trial_status():
+    return review_trial.status()
+
+
+@app.post("/api/review/trial")
+def trial_evaluation(data: review_trial.TrialInput):
+    return review_trial.evaluate(data)
+
+
+@app.post("/api/requirements/{ident}/reviews", dependencies=[Depends(write_access)])
+def evaluate_requirement(
+    ident: int, data: reviews.ReviewRequest, db: Session = Depends(get_db)
+):
+    return reviews.start_review(ident, data, db)
+
+
+@app.post(
+    "/api/requirement-reviews/{review_id}/findings/{index}/decision",
+    dependencies=[Depends(write_access)],
+    status_code=201,
+)
+def confirm_finding(
+    review_id: int,
+    index: int,
+    data: reviews.DecisionRequest,
+    db: Session = Depends(get_db),
+):
+    return reviews.decide(review_id, index, data, db)
+
+
+# Register API routes before the static mount.
 # history routes, so unknown API paths remain 404 instead of returning index.html.
 if get_settings().static_dir:
     app.mount("/", StaticFiles(directory=get_settings().static_dir, html=True))
