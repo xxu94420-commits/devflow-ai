@@ -45,3 +45,24 @@ jobs:
           curl --fail http://localhost:8080/backend/api/metrics?mode=demo
       - if: always()
         run: docker compose logs && docker compose down
+  public-demo-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t devflow-public .
+      - run: |
+          docker run -d --name public-demo -p 8081:8000 devflow-public
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8081/api/health; then break; fi
+            sleep 2
+          done
+          curl --fail http://localhost:8081/ | grep 'root'
+          curl --fail http://localhost:8081/api/capabilities | grep '"read_only":true'
+          curl --fail http://localhost:8081/api/tasks | grep 'synthetic\|示例'
+          curl --fail http://localhost:8081/api/reports/download -o /tmp/report.md
+          test -s /tmp/report.md
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8081/api/demo/seed)" = "403"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/missing)" = "404"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/.env)" = "404"
+      - if: always()
+        run: docker logs public-demo; docker rm -f public-demo

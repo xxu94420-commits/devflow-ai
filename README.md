@@ -58,6 +58,8 @@ compose.yaml
 
 ## 快速启动：Docker
 
+公开只读版本另提供根目录 `Dockerfile` 和 `render.yaml`，保留筛选、链路浏览与报告下载，服务端拒绝全部写操作。部署步骤、数据来源和免费实例限制见 [公网演示部署说明](docs/public-demo-deployment.md)。仅有部署配置不代表站点已上线，实际演示地址将在部署验收后补充。
+
 需要Docker Engine/Desktop和Compose插件。从仓库根目录执行：
 
 ```bash

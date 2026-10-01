@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: devflow-ai-demo
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: READ_ONLY
+        value: "true"
+      - key: DEMO_IMPORT_GITHUB
+        value: "true"
+      - key: DATABASE_URL
+        value: sqlite:////data/public-demo.db
+      - key: STATIC_DIR
+        value: /app/static

@@ -180,6 +180,8 @@ function Donut({
 }
 
 export default function App() {
+  // Fail closed until the server explicitly advertises writable capabilities.
+  const [readOnly, setReadOnly] = useState(true);
   const [page, setPage] = useState(0),
     [mode, setMode] = useState("demo"),
     [start, setStart] = useState(monthAgo),
@@ -211,13 +213,15 @@ export default function App() {
     setDetail(null);
     setReport("");
     Promise.all([
+      api<{ read_only: boolean }>("/capabilities"),
       api<Project[]>(`/projects?mode=${mode}`),
       api<Analysis>(`/metrics?${query}`),
       api<Task[]>(`/tasks?mode=${mode}${pid ? `&project_id=${pid}` : ""}`),
       pid ? api<ProjectDetail>(`/projects/${pid}`) : Promise.resolve(null),
     ])
-      .then(([p, a, t, d]) => {
+      .then(([capabilities, p, a, t, d]) => {
         if (active) {
+          setReadOnly(capabilities.read_only !== false);
           setProjects(p);
           setData(a);
           setTasks(t);
@@ -288,10 +292,12 @@ export default function App() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button className="secondary" onClick={() => setModal("task")}>
-            <Plus size={16} />
-            新建任务
-          </button>
+          {!readOnly && (
+            <button className="secondary" onClick={() => setModal("task")}>
+              <Plus size={16} />
+              新建任务
+            </button>
+          )}
         </div>
         {visibleTasks.length ? (
           <div className="table-scroll">
@@ -398,7 +404,7 @@ export default function App() {
           <div className="top-actions">
             <span className="status done">
               <i />
-              本地分析平台
+              {readOnly ? "公开只读演示" : "本地分析平台"}
             </span>
             <a
               href="https://github.com/xxu94420-commits/devflow-ai"
@@ -437,13 +443,15 @@ export default function App() {
                 }
               </p>
             </div>
-            <button
-              className="primary"
-              onClick={() => setModal(page === 2 ? "ai" : "import")}
-            >
-              <Plus size={16} />
-              {page === 2 ? "记录 AI 协作" : "导入 GitHub 仓库"}
-            </button>
+            {!readOnly && (
+              <button
+                className="primary"
+                onClick={() => setModal(page === 2 ? "ai" : "import")}
+              >
+                <Plus size={16} />
+                {page === 2 ? "记录 AI 协作" : "导入 GitHub 仓库"}
+              </button>
+            )}
           </div>
           <div className="filters">
             <div className="mode-switch">
@@ -495,6 +503,13 @@ export default function App() {
               <RefreshCw size={17} />
             </button>
           </div>
+          {readOnly && (
+            <div className="notice" role="status">
+              公开只读演示 ·
+              可筛选、查看协作链路并下载周报。编辑和导入已关闭；Live
+              为启动时读取的公开仓库快照，不代表实时同步。
+            </div>
+          )}
           <div className={mode === "demo" ? "banner" : "banner live"}>
             <CircleDot size={16} />
             <span>
@@ -510,7 +525,7 @@ export default function App() {
                 </>
               )}
             </span>
-            {mode === "demo" && (
+            {mode === "demo" && !readOnly && (
               <button
                 disabled={busy}
                 onClick={() =>
@@ -823,19 +838,23 @@ export default function App() {
                           >
                             ← 返回任务列表
                           </button>
-                          <button
-                            className="primary"
-                            onClick={() => setModal("record")}
-                          >
-                            <Plus size={16} />
-                            更新任务 / 补充记录
-                          </button>
-                          <button
-                            className="secondary"
-                            onClick={() => setModal("ai")}
-                          >
-                            记录 AI 协作
-                          </button>
+                          {!readOnly && (
+                            <>
+                              <button
+                                className="primary"
+                                onClick={() => setModal("record")}
+                              >
+                                <Plus size={16} />
+                                更新任务 / 补充记录
+                              </button>
+                              <button
+                                className="secondary"
+                                onClick={() => setModal("ai")}
+                              >
+                                记录 AI 协作
+                              </button>
+                            </>
+                          )}
                         </div>
                         <Panel title={detail.title} hint={detail.task_type}>
                           <p>{detail.description}</p>
@@ -986,7 +1005,7 @@ export default function App() {
           </footer>
         </div>
       </main>
-      {modal && (
+      {modal && !readOnly && (
         <div className="modal-backdrop">
           <section
             className="modal"

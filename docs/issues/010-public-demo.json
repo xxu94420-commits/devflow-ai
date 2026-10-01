@@ -1,0 +1,4 @@
+{
+  "title": "feat: publish a read-only portfolio demo with reproducible Docker deployment",
+  "body": "用户要求部署公网只读演示。\n\n实施范围：服务端拒绝所有写请求（即使提供正确 API Key）；前端依据服务能力隐藏写入入口；单容器提供前端与 API；独立初始化 synthetic/demo 数据，并可读取本项目公开 GitHub 数据，不上传本地数据库；提供 Render 免费实例配置与限制说明。\n\n验收：写入拒绝及数据库不变测试、读取/报告下载可用、前端检查构建、Docker 冒烟测试、实际部署后检查公网 HTTPS。托管账号尚未确认，未声称上线。"
+}

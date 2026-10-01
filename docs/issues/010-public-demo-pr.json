@@ -1,0 +1,6 @@
+{
+  "title": "feat: add a read-only public demo and single-container deployment",
+  "head": "codex/public-readonly-demo",
+  "base": "main",
+  "body": "公开作品集演示需要允许访客查看指标、协作链路与周报，同时禁止数据修改。新增 READ_ONLY 服务端边界及 capabilities，正确写入密钥也不能绕过；前端默认关闭编辑，依据服务能力隐藏写入口。\n\n根目录多阶段 Docker 镜像同域提供 React 与 FastAPI，使用独立模拟数据库，允许启动时限时读取本项目公开 GitHub 数据，不复制本机数据库或密钥。提供 Render Free Blueprint、部署说明、ADR 004 和容器冒烟测试。\n\n验证：后端31项测试、Ruff/Black通过；前端3项测试、ESLint/Prettier、TypeScript及生产构建通过。修复本地 Vite 缓存被 ESLint 检查的问题；仍存在 ECharts 包体积提示。Docker由新增CI作业实际验证。公网部署尚待用户托管账号，不能将配置准备完成当作已上线。\n\nRefs #10；Issue在公网验收后关闭。"
+}
