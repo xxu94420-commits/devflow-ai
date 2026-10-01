@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -23,6 +24,22 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT"],
     allow_headers=["Content-Type", "X-API-Key"],
 )
+
+
+@app.middleware("http")
+async def read_only_guard(request: Request, call_next):
+    # Enforce at the HTTP boundary, including future routes and valid write keys.
+    if get_settings().read_only and request.method not in {"GET", "HEAD", "OPTIONS"}:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "公开演示为只读模式，不接受写入或仓库导入"},
+        )
+    return await call_next(request)
+
+
+@app.get("/api/capabilities")
+def capabilities():
+    return {"read_only": get_settings().read_only}
 
 
 @app.exception_handler(RequestValidationError)
@@ -45,6 +62,8 @@ async def duplicate_error(request: Request, exc: IntegrityError):
 
 
 def write_access(x_api_key: str = Header(default="")):
+    if get_settings().read_only:
+        raise HTTPException(403, "公开演示为只读模式，不接受写入或仓库导入")
     expected = get_settings().devflow_api_key
     if expected and not hmac.compare_digest(x_api_key, expected):
         raise HTTPException(401, "写入需要有效 X-API-Key")
@@ -374,3 +393,9 @@ def download_report(
         media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# API routes must be registered before the root static mount. The UI uses no
+# history routes, so unknown API paths remain 404 instead of returning index.html.
+if get_settings().static_dir:
+    app.mount("/", StaticFiles(directory=get_settings().static_dir, html=True))
