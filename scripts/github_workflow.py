@@ -24,7 +24,8 @@ if args.body_file:
 with httpx.Client(timeout=30) as client:
     response = client.request(
         args.method,
-        "https://api.github.com/repos/xxu94420-commits/devflow-ai/" + args.path.lstrip("/"),
+        "https://api.github.com/repos/xxu94420-commits/devflow-ai"
+        + ("" if args.path == "." else "/" + args.path.lstrip("/")),
         headers={"Authorization": "Bearer " + fields["password"],
                  "Accept": "application/vnd.github+json"},
         json=body,

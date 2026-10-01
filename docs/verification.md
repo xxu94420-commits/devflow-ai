@@ -34,3 +34,4 @@
 - TypeScript、ESLint、Prettier复查通过；图表优化后的生产构建与3项Vitest通过。
 - 浏览器任务创建、AI保存、统计聚合、时间线更新和Live来源说明实际通过，浏览器error日志为空。
 - 最终主分支CI以仓库Actions中的实际状态为准；不将早先提交的成功当作后续代码已验证。
+- 最终功能提交`c35daf9`的[PR验证](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36850593007)与[push验证](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36850588460)均success，包含24项后端测试、3项前端测试、格式/构建/迁移和Docker冒烟。
