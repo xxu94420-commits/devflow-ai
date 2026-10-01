@@ -17,7 +17,8 @@
 - 单个多阶段镜像内构建 React，FastAPI 同域提供 `/`、`/assets` 和 `/api`；前端不会请求访客电脑的 localhost。
 - 镜像使用非 root 用户，只复制程序、迁移和构建产物。Docker 上下文排除 `.env`、Git、本地数据库、依赖目录与缓存。
 - 启动执行迁移，幂等生成42个 synthetic/demo 任务。`DEMO_IMPORT_GITHUB=true` 时读取 `xxu94420-commits/devflow-ai`，最多一页/列表、最多20个PR详情，总时间预算60秒；失败不影响Demo。
-- GitHub 数据仅为启动时快照，项目详情显示采集时间与覆盖范围，不宣称持续同步。Live 没有人工 AI 记录时保留缺失。
+- Issue/PR/Commit元数据为启动快照，项目详情显示采集时间与覆盖范围。CI另由 `CI_SYNC_INTERVAL_SECONDS=3600` 每小时读取最新运行，服务休眠期间不采集；页面展示实际启用状态。Live没有人工AI记录时保留缺失。
+- CI运行元数据不需要Token；下载JUnit artifact需要维护者在Render Environment自行配置 `GITHUB_TOKEN`，仅此仓库的Actions读取权限即可。此配置可选，未配置时计数显示未知；不要发送Token到聊天或提交Git。详见[自动测试链路](ci-test-evidence.md)。
 - 不上传本地数据库，不导入毕业论文仓库，不复制本机 GitHub 凭据。公开数据就是 synthetic/demo 和公开仓库元数据。
 - `READ_ONLY=true` 在服务端拒绝全部非 GET/HEAD/OPTIONS 方法，返回403；正确API Key也不能绕过。公开站没有新增、导入、编辑或密钥输入入口。
 - 仍可切换数据模式、筛选日期/项目、查看五个页面和下载 Markdown。所有读取数据都是公开的；只读不等于隐私权限管理。
