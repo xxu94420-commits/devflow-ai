@@ -944,3 +944,21 @@ footer small {
   margin-top: 7px;
   line-height: 1.8;
 }
+:root .ci-run {
+  padding: 18px 0;
+  border-top: 1px solid #edf0f5;
+}
+.ci-run .panel-title {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ci-run p {
+  margin: 8px 0;
+}
+.ci-run summary {
+  cursor: pointer;
+  color: #5468b5;
+}
+.ci-digest {
+  overflow-wrap: anywhere;
+}

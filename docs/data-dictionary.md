@@ -31,3 +31,10 @@ Task允许尚未关联Issue/Requirement，以支持独立任务与补录；界�
 ## 模式与范围
 
 Demo实体依赖一个`synthetic/devflow-demo`项目；seed第一次执行生成42个任务，重复执行返回created=false，不刷新日期或覆盖人工修改。Live导入不创建AI记录；只在用户明确记录后出现AI数据。默认展示最近30天，历史仓库可能需要调整日期。
+# 自动CI证据扩展（2026-10-02）
+
+- `ci_runs`：项目 + GitHub run_id(BigInteger) + attempt唯一；SHA、分支、事件、状态、结论、PR编号、最多100个作业摘要、采集时间；JUnit状态、artifact_id、SHA256、套件计数及passed/failed/errors/skipped。所有计数可空，空不是零。
+- `ci_runs.task_id`：唯一任务归属，可空；association为automatic/manual/unlinked/ambiguous，candidate_task_ids保留当前候选。
+- `test_results.ci_run_id`：可空唯一外键，null代表人工记录；自动记录仅来自完整且已归属的执行，跳过不计入total。
+- `projects.ci_synced_at/ci_sync_note`：上次成功采集时间及范围/失败提示，与仓库元数据导入时间分开。
+

@@ -46,6 +46,8 @@ export interface Project {
   mode: string;
   imported_at: string | null;
   import_note: string;
+  ci_synced_at: string | null;
+  ci_sync_note: string;
 }
 export interface Task {
   id: number;
@@ -109,6 +111,7 @@ export interface ProjectDetail extends Project {
   requirements: Entity[];
 }
 export interface Detail extends Task {
+  ci_runs: CIRun[];
   timeline: { id: number; kind: string; title: string; at: string }[];
   ai_summary: {
     tools: string[];
@@ -133,6 +136,45 @@ export interface Detail extends Task {
     suggestion_count: number;
     modification_notes: string;
     quality_result: string;
+  }[];
+}
+export interface CIRun {
+  id: number;
+  project_id: number;
+  run_id: number;
+  attempt: number;
+  name: string;
+  head_sha: string;
+  branch: string;
+  event: string;
+  status: string;
+  conclusion: string | null;
+  url: string;
+  pr_numbers: number[];
+  created_at: string;
+  synced_at: string;
+  task_id: number | null;
+  association: string;
+  candidate_task_ids: number[];
+  evidence_status: string;
+  note: string;
+  digest: string;
+  passed: number | null;
+  failed: number | null;
+  errors: number | null;
+  skipped: number | null;
+  jobs: {
+    id: number;
+    name: string;
+    status: string;
+    conclusion: string | null;
+  }[];
+  reports: {
+    name: string;
+    passed: number;
+    failed: number;
+    errors: number;
+    skipped: number;
   }[];
 }
 export const types = [

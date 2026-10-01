@@ -17,3 +17,5 @@ services:
         value: sqlite:////data/public-demo.db
       - key: STATIC_DIR
         value: /app/static
+      - key: CI_SYNC_INTERVAL_SECONDS
+        value: "3600"
