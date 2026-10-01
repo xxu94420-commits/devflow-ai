@@ -1,18 +1,26 @@
 # 公网只读演示
 
-关联 Issue #10 / PR #11 / ADR 004。2026-10-01已部署并完成公网验收：**https://devflow-ai-demo.onrender.com**。
+**访客入口：[打开 DevFlow AI 公网只读演示](https://devflow-ai-demo.onrender.com)**。查看演示无需登录 Render，也无需部署服务；简历和作品集可直接使用此地址。
+
+关联 Issue #10 / PR #11 / ADR 004。2026-10-01完成首次公网部署与验收。
 
 当前运行提交：`efc0609ab748227c4036127542a9753816b98f01`（PR #13），2026-10-02完成新版验收。首次部署为 `0c2308d`（PR #11）。Render服务仍为 Docker / Free；后续文档提交不改变已运行的程序版本。
 
 新版实际验收：`/api/ci/status` 返回3600秒周期、artifact权限未配置；公开采集3条真实运行，计数保持null。浏览器项目详情显示采集时间、来源链接和权限提示，截图为 `docs/screenshots/public-ci-evidence.png`。完整JUnit回流仅在本地独立验收库验证，未上传本机凭据或数据库。
 
-## Render 免费 Web Service
+## 自行部署副本（Render 免费 Web Service）
+
+以下步骤供希望在自己账号中部署副本的维护者参考。现有演示已上线，访客直接使用上方入口即可。
 
 1. 登录自己的 [Render 账号](https://dashboard.render.com/)。选择 Hobby 工作空间和 Free 实例；不要为本演示添加付费实例、磁盘或数据库。如账号要求支付信息，先停下确认。
-2. 在主分支 CI 通过后打开 [部署入口](https://render.com/deploy?repo=https://github.com/xxu94420-commits/devflow-ai)，或 New → Blueprint，连接此仓库并读取根目录 `render.yaml`。
-3. 审核资源仅有一个 `devflow-ai-demo` Docker Web Service，plan=free。保持 READ_ONLY=true；不需要 GitHub Token、数据库密码或自定义域名。
+2. 在主分支 CI 通过后打开 [在 Render 创建部署副本](https://render.com/deploy?repo=https://github.com/xxu94420-commits/devflow-ai)，或 New → Blueprint，连接此仓库并读取根目录 `render.yaml`。
+3. 审核资源仅有一个 `devflow-ai-demo` Docker Web Service，plan=free。保持 READ_ONLY=true；基础演示不需要 GitHub Token、数据库密码或自定义域名。完整JUnit报告下载的可选权限见下方说明。
 4. 点击部署。首次拉取依赖需要数分钟，Render 提供实际的 HTTPS 地址，名称冲突时可能带后缀，不能预先假定网址。
-5. 按下方清单验收后，再把**实际地址**写入 README 和简历。当前关闭自动部署，后续更新在 CI 通过后手动部署最新主分支。
+5. 按下方清单验收自己的副本后，使用 Render 为该副本分配的 HTTPS 地址。当前项目的实际入口已写入 README：**[https://devflow-ai-demo.onrender.com](https://devflow-ai-demo.onrender.com)**。
+
+## 更新现有演示（项目维护者）
+
+现有服务关闭代码自动部署。后续在主分支 CI 通过后，从现有服务的 Manual Deploy 更新代码；如修改 `render.yaml`，通过现有 Blueprint 的 Manual sync 核对并应用配置差异，配置变更也可能触发部署。无需重新创建服务。
 
 ## 数据与边界
 
