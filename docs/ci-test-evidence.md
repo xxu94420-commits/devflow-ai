@@ -44,7 +44,7 @@ CI分别上传 `devflow-part-backend-{attempt}` 与 `devflow-part-frontend-{atte
 
 API固定指向GitHub；不接受任意artifact URL。下载302跳转仅允许HTTPS GitHub/Azure artifact域，使用独立无Authorization客户端。ZIP最多2MiB，展开最多8MiB和25文件，禁止目录路径/加密/重复文件；XML禁止DTD和实体。不持久保存原始XML、测试输出、失败堆栈或带签名下载链接。
 
-JUnit源报告本身可能包含测试路径和输出，上传前仓库维护者应保证测试不打印密钥。本项目CI仅使用公开fixture，不能将此协议视为任意业务报告已自动脱敏。
+本项目CI使用公开测试样例和模拟凭据验证采集流程，不向测试注入真实业务密钥。平台解析JUnit后仅保存测试计数、报告文件名和校验值，不保存原始测试输出。JUnit源报告仍可能包含测试路径和输出；当前实现不提供源报告上传前的自动脱敏功能。
 
 ## 已执行的真实验证
 
