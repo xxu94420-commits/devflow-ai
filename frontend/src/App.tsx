@@ -35,6 +35,7 @@ import type {
   Task,
 } from "./api";
 import { Chart } from "./Chart";
+import { CISection } from "./CISection";
 
 const pages = [
   { name: "总览 Dashboard", icon: LayoutDashboard },
@@ -507,7 +508,7 @@ export default function App() {
             <div className="notice" role="status">
               公开只读演示 ·
               可筛选、查看协作链路并下载周报。编辑和导入已关闭；Live
-              为启动时读取的公开仓库快照，不代表实时同步。
+              仓库元数据为启动快照；CI采集状态见项目详情。
             </div>
           )}
           <div className={mode === "demo" ? "banner" : "banner live"}>
@@ -660,6 +661,12 @@ export default function App() {
                               {project.import_note}
                             </p>
                           )}
+                          {project.mode === "live" && (
+                            <p className="muted">
+                              CI最近同步：{project.ci_synced_at ?? "尚未同步"} ·{" "}
+                              {project.ci_sync_note}
+                            </p>
+                          )}
                           <div className="repo-stats">
                             <span>{project.issues.length} Issues</span>
                             <span>
@@ -713,6 +720,16 @@ export default function App() {
                           </Panel>
                         </div>
                         <Panel title="项目任务">{taskTable()}</Panel>
+                        {project.mode === "live" && (
+                          <CISection
+                            key={project.id}
+                            projectId={project.id}
+                            readOnly={readOnly}
+                            tasks={tasks}
+                            onOpenTask={(id) => void openTask(id)}
+                            onChanged={() => setVersion((v) => v + 1)}
+                          />
+                        )}
                         <Panel title="仓库对象">
                           <div className="grid equal">
                             {(["issues", "pull_requests"] as const).map(
@@ -887,6 +904,16 @@ export default function App() {
                             </span>
                           </div>
                         </Panel>
+                        {mode === "live" && (
+                          <CISection
+                            projectId={detail.project_id}
+                            runs={detail.ci_runs}
+                            readOnly={readOnly}
+                            tasks={tasks}
+                            onOpenTask={(id) => void openTask(id)}
+                            onChanged={() => void openTask(detail.id)}
+                          />
+                        )}
                         <div className="grid equal">
                           <Panel title="完整历史协作链路" hint="UTC 时间">
                             <div className="timeline">

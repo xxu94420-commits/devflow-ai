@@ -4,11 +4,22 @@
 
 **[打开公网只读演示](https://devflow-ai-demo.onrender.com)** · [GitHub Actions](https://github.com/xxu94420-commits/devflow-ai/actions)
 
-支持查看指标、筛选项目与日期、浏览协作链路和下载周报；不接受访客写入。Render免费实例休眠后首次访问可能等待约一分钟。Demo明确标记为模拟数据，Live展示本项目公开仓库的启动时快照。
+支持查看指标、筛选项目与日期、浏览协作链路和下载周报；不接受访客写入。Render免费实例休眠后首次访问可能等待约一分钟。Demo明确标记为模拟数据；Live仓库元数据为启动快照，自动CI采集周期与权限状态在项目详情单独展示。
 
 从“提交了多少代码”转向“需求如何交付、AI参与了什么、验证与返工发生在哪里”。本平台连接GitHub公开研发元数据与人工AI记录，提供有明确样本量、分母和局限的描述性分析，不宣称未经验证的效率提升。
 
 ![研发效能总览（synthetic/demo data）](docs/screenshots/dashboard.png)
+
+公网版本：[只读部署说明与验收](docs/public-demo-deployment.md)。自动测试链路：[配置、数据口径和真实验证](docs/ci-test-evidence.md)。未配置 GitHub Actions 读取权限时，公网仅展示运行状态，用例数保持未知。
+
+<details>
+<summary>查看真实 CI 回流截图（本地独立验收库，非公网数据）</summary>
+
+![真实 Actions 报告关联任务](docs/screenshots/ci-evidence.png)
+
+此图为第一阶段真实运行：41 项后端 + 3 项前端测试，共 44 项；不代表当前测试总数。来源运行、采集时间、报告校验值均可追溯。
+
+</details>
 
 ## 解决什么问题
 
@@ -23,9 +34,9 @@ DevFlow提供Requirement → Issue → Task → AIInteraction → Commit/PR → 
 | 页面 | 能力 |
 | --- | --- |
 | 总览 | 交付/质量/AI指标、趋势、任务分布、样本提示 |
-| 项目详情 | 仓库来源说明、Issue/PR/Commit趋势、任务、变更与周期散点、缺陷与返工 |
+| 项目详情 | 仓库来源、趋势、任务、缺陷与返工；Actions运行/重跑、JUnit计数、任务归属与证据链接 |
 | AI Coding分析 | 工具/环节分布、AI与非AI均值、按类型样本与时间差 |
-| 任务详情 | 需求、Issue、AI、Commit、PR、测试、缺陷、复盘时间线；手动记录与状态更新 |
+| 任务详情 | 需求、Issue、AI、Commit、PR、自动CI/手工测试、缺陷、复盘时间线；本地支持补录与关联 |
 | 周报复盘 | 所选窗口与前一等长窗口比较、规则提示、代表案例、Markdown下载 |
 
 ## 架构与目录
@@ -37,6 +48,9 @@ flowchart LR
   A --> M[指标与报告服务]
   A --> G[GitHub公开导入]
   G --> GH[GitHub REST]
+  CI[Actions JUnit Artifact] --> C[定期采集 / 安全解析]
+  C --> DB
+  C --> T[按明确SHA或PR关联任务]
   A --> DB[(SQLAlchemy + SQLite)]
   M --> DB
   G --> DB
@@ -130,6 +144,10 @@ curl -X POST http://localhost:8000/api/github/import \
 Swagger提供需求创建/修改、Issue关联、缺陷解决等全部接口；前端提供常用任务、AI交互、测试、缺陷、复盘和Commit/PR关联入口。任务完成必须填写实际工时。没有计时证据时不要为展示效果补造数字。
 
 ## 测试与验证
+
+自动测试数据链路见 [CI证据接入说明](docs/ci-test-evidence.md)：CI生成Pytest/Vitest JUnit，按运行ID和attempt幂等采集，只有完整且明确关联任务的报告进入测试指标；跳过不计通过，无权限或缺报告不补造计数。
+
+本地 `.env` 设置 `CI_SYNC_INTERVAL_SECONDS=3600` 可启用每小时轮询；默认0关闭。报告下载需要服务端 `GITHUB_TOKEN` 具有目标仓库 Actions读取权限。公网继续只读，后台采集与访客写接口相互独立；没有Token仍可展示真实运行状态。界面中的“已配置”不代表Token一定有效，实际报告状态为准。
 
 ```bash
 cd backend

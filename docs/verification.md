@@ -2,6 +2,15 @@
 
 执行日期：2026-09-30首次实现，2026-10-01继续交付验证。
 
+## 2026-10-02 自动测试证据链路
+
+- 本地后端57项、前端6项测试通过；Ruff、Black（单worker）、ESLint、Prettier、TypeScript与生产构建通过。
+- 功能提交025f9d7的[GitHub Actions](https://github.com/xxu94420-commits/devflow-ai/actions/runs/36894843708)已完成且success；包含backend、frontend、test-evidence、docker-smoke、public-demo-smoke。
+- 第一阶段真实run 36857274639回流44个通过用例，重复同步仍只有1条关联TestResult。它与最终57+6项回归不是同一批运行。
+- 浏览器实际打开独立验收库的真实任务，确认Issue、CI运行、测试时间线、41/3分套件计数、来源链接和SHA256；只读页无同步和关联编辑入口。截图为 `docs/screenshots/ci-evidence.png`，不是公网已配置凭据的证据。
+- Windows Black多worker执行曾挂起，改为单worker后完成；不将环境进程问题描述为业务测试失败。
+- 文档提交0708ca8的push检查成功，但PR run 36896069176首次attempt在拉取nginx镜像元数据时遇到Docker Hub 502；该次后端、前端与公网容器作业通过。保留失败记录并重跑完整工作流，不把上游故障伪造成测试用例失败。
+
 ## 已完成的检查
 
 - 后端最初4项指标测试通过；API阶段10项通过；GitHub导入初次14通过/7失败，修复模拟客户端base_url后21通过；增加日期边界及完整更新链路后23通过。

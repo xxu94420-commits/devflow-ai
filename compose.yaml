@@ -6,6 +6,7 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       DEVFLOW_API_KEY: ${DEVFLOW_API_KEY:-}
       READ_ONLY: ${READ_ONLY:-false}
+      CI_SYNC_INTERVAL_SECONDS: ${CI_SYNC_INTERVAL_SECONDS:-0}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
     ports:
       - "127.0.0.1:8000:8000"

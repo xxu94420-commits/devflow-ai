@@ -18,7 +18,15 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
-      - run: ruff check . && black --check . && pytest -q
+      - run: ruff check . && black --check .
+      - run: pytest -q --junitxml=../reports/backend.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: devflow-part-backend-${{ github.run_attempt }}
+          path: reports/backend.xml
+          retention-days: 14
+          if-no-files-found: warn
       - run: alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head
   frontend:
     runs-on: ubuntu-latest
@@ -32,7 +40,35 @@ jobs:
           node-version: '24'
       - run: corepack enable && corepack prepare pnpm@11.19.0 --activate
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm format:check && pnpm test && pnpm build
+      - run: pnpm lint && pnpm format:check
+      - run: pnpm exec vitest run --reporter=default --reporter=junit --outputFile=../reports/frontend.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: devflow-part-frontend-${{ github.run_attempt }}
+          path: reports/frontend.xml
+          retention-days: 14
+          if-no-files-found: warn
+      - run: pnpm build
+  test-evidence:
+    needs: [backend, frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: devflow-part-*-${{ github.run_attempt }}
+          merge-multiple: true
+          path: reports
+      - run: |
+          mkdir -p reports
+          printf '%s\n' '{"version":1,"expected_reports":["backend.xml","frontend.xml"]}' > reports/manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: devflow-junit-${{ github.run_attempt }}
+          path: reports/
+          retention-days: 14
+          if-no-files-found: error
   docker-smoke:
     runs-on: ubuntu-latest
     steps:

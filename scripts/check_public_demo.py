@@ -27,6 +27,8 @@ with httpx.Client(base_url=args.url.rstrip("/"), timeout=30) as client:
         f"/api/projects/{demo[0]['id']}",
         f"/api/tasks/{tasks[0]['id']}",
         "/api/reports?mode=demo",
+        "/api/ci/status",
+        "/api/ci/runs?mode=live",
     ]:
         client.get(path).raise_for_status()
     download = client.get("/api/reports/download?mode=demo")
@@ -38,6 +40,8 @@ with httpx.Client(base_url=args.url.rstrip("/"), timeout=30) as client:
         ("POST", "/api/github/import"),
         ("POST", "/api/tasks"),
         ("POST", "/api/interactions"),
+        ("POST", "/api/ci/sync"),
+        ("PUT", "/api/ci/runs/1/task"),
         ("PUT", f"/api/tasks/{tasks[0]['id']}"),
         ("DELETE", "/api/future-route"),
         ("PATCH", "/api/future-route"),

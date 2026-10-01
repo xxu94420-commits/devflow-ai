@@ -1,8 +1,10 @@
+import asyncio
 import hmac
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
@@ -17,7 +19,22 @@ from .config import get_settings
 from .db import get_db
 from .metrics import analyze
 
-app = FastAPI(title="DevFlow AI", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app):
+    worker = None
+    if get_settings().ci_sync_interval_seconds:
+        from .ci_worker import poll
+
+        worker = asyncio.create_task(poll())
+    yield
+    if worker:
+        worker.cancel()
+        with suppress(asyncio.CancelledError):
+            await worker
+
+
+app = FastAPI(title="DevFlow AI", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origins.split(","),
@@ -261,6 +278,10 @@ def task_links(task_id: int, data: s.LinksIn, db: Session = Depends(get_db)):
                 raise HTTPException(422, "关联实体必须属于同一个项目")
             if db.get(link_cls, (task_id, ident)) is None:
                 db.add(link_cls(task_id=task_id, **{column: ident}))
+    db.flush()
+    from .ci import reconcile_project
+
+    reconcile_project(db, task.project_id)
     db.commit()
     return {"status": "linked"}
 
@@ -277,6 +298,14 @@ def task_detail(task_id: int, db: Session = Depends(get_db)):
         )
 
     event("task", task, task.title)
+    ci_runs = list(db.scalars(select(m.CIRun).where(m.CIRun.task_id == task_id)))
+    result["ci_runs"] = [row(run) for run in ci_runs]
+    for run in ci_runs:
+        event(
+            "ci_run",
+            run,
+            f"CI #{run.run_id} / {run.attempt}: {run.conclusion or run.status}",
+        )
     issue = db.get(m.Issue, task.issue_id) if task.issue_id else None
     req_id = task.requirement_id or (issue.requirement_id if issue else None)
     req = db.get(m.Requirement, req_id) if req_id else None
@@ -330,6 +359,11 @@ def task_detail(task_id: int, db: Session = Depends(get_db)):
         tests[0]["passed"] == tests[0]["total"] if tests else None
     )
     result["defect_count"] = len(result["defects"])
+    if tests and any(
+        run.evidence_status != "available" and run.created_at <= tests[0]["created_at"]
+        for run in ci_runs
+    ):
+        result["first_test_passed"] = None
     return result
 
 
@@ -393,6 +427,69 @@ def download_report(
         media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.get("/api/ci/runs")
+def ci_runs(
+    mode: Literal["live", "demo"] = "live",
+    project_id: int | None = None,
+    limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    query = select(m.CIRun).join(m.Project).where(m.Project.mode == mode)
+    if project_id is not None:
+        query = query.where(m.CIRun.project_id == project_id)
+    return [
+        row(run)
+        for run in db.scalars(
+            query.order_by(m.CIRun.created_at.desc(), m.CIRun.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+    ]
+
+
+@app.get("/api/ci/status")
+def ci_status():
+    settings = get_settings()
+    return {
+        "poll_interval_seconds": settings.ci_sync_interval_seconds,
+        "artifact_access_configured": bool(settings.github_token),
+    }
+
+
+@app.post("/api/ci/sync", dependencies=[Depends(write_access)])
+def sync_ci(data: s.CISyncIn, db: Session = Depends(get_db)):
+    from .ci import sync_project
+    from .github import ImportFailure
+
+    project = require(db, m.Project, data.project_id)
+    try:
+        return sync_project(db, project, data.max_runs)
+    except ImportFailure as exc:
+        project.ci_sync_note = exc.message
+        db.commit()
+        raise HTTPException(exc.status, exc.message) from None
+    except Exception:
+        db.rollback()
+        raise HTTPException(502, "CI同步失败；本轮已回滚，未保存不完整数据") from None
+
+
+@app.put("/api/ci/runs/{run_id}/task", dependencies=[Depends(write_access)])
+def associate_ci(run_id: int, data: s.CIAssociationIn, db: Session = Depends(get_db)):
+    from .ci import reconcile
+
+    run = require(db, m.CIRun, run_id)
+    if data.task_id is not None:
+        task = require(db, m.Task, data.task_id)
+        if task.project_id != run.project_id:
+            raise HTTPException(422, "CI运行与任务必须属于同一个项目")
+    run.task_id = data.task_id
+    run.association = "manual" if data.task_id is not None else "unlinked"
+    reconcile(db, run)
+    db.commit()
+    return row(run)
 
 
 # API routes must be registered before the root static mount. The UI uses no

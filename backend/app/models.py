@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Float,
@@ -29,6 +30,8 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     imported_at: Mapped[datetime | None] = mapped_column(DateTime)
     import_note: Mapped[str] = mapped_column(default="")
+    ci_synced_at: Mapped[datetime | None] = mapped_column(DateTime)
+    ci_sync_note: Mapped[str] = mapped_column(default="")
 
 
 class Requirement(Base):
@@ -153,10 +156,44 @@ class TestResult(Base):
     __tablename__ = "test_results"
     id: Mapped[int] = mapped_column(primary_key=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    ci_run_id: Mapped[int | None] = mapped_column(ForeignKey("ci_runs.id"), unique=True)
     name: Mapped[str] = mapped_column(String(200))
     passed: Mapped[int] = mapped_column(Integer)
     total: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class CIRun(Base):
+    __tablename__ = "ci_runs"
+    __table_args__ = (UniqueConstraint("project_id", "run_id", "attempt"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    run_id: Mapped[int] = mapped_column(BigInteger)
+    attempt: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String(200))
+    head_sha: Mapped[str] = mapped_column(String(64), index=True)
+    branch: Mapped[str] = mapped_column(String(300), default="")
+    event: Mapped[str] = mapped_column(String(50), default="")
+    status: Mapped[str] = mapped_column(String(30))
+    conclusion: Mapped[str | None] = mapped_column(String(30))
+    url: Mapped[str] = mapped_column(default="")
+    pr_numbers: Mapped[list] = mapped_column(JSON, default=list)
+    jobs: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    synced_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"), index=True)
+    association: Mapped[str] = mapped_column(String(30), default="unlinked")
+    candidate_task_ids: Mapped[list] = mapped_column(JSON, default=list)
+    evidence_status: Mapped[str] = mapped_column(String(30), default="pending")
+    note: Mapped[str] = mapped_column(default="")
+    artifact_id: Mapped[int | None] = mapped_column(BigInteger)
+    digest: Mapped[str] = mapped_column(String(80), default="")
+    reports: Mapped[list] = mapped_column(JSON, default=list)
+    passed: Mapped[int | None] = mapped_column(Integer)
+    failed: Mapped[int | None] = mapped_column(Integer)
+    errors: Mapped[int | None] = mapped_column(Integer)
+    skipped: Mapped[int | None] = mapped_column(Integer)
 
 
 class Defect(Base):

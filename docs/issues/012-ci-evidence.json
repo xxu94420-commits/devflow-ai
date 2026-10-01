@@ -1,0 +1,4 @@
+{
+  "title": "feat: automatically ingest GitHub Actions JUnit evidence and link tasks",
+  "body": "补自动测试数据链路：CI产出JUnit artifact，按repository/run_id/attempt幂等同步运行、作业、真实测试计数；按明确SHA/PR关联任务，歧义或无匹配不猜测。区分工作流成功与测试用例通过，缺失/过期/无权限/无报告时计数未知，跳过用例不计成功。\n\n分阶段：1. JUnit安全解析、数据模型与迁移；2. Actions同步与关联API、后台周期采集；3. 项目/任务证据UI；4.真实CI回流、文档、部署与验收。公开站继续拒绝访客写入，凭据仅服务端环境读取。\n\n验收含成功/失败/跳过、重复同步、重跑attempt、关联歧义、过期/限流/网络故障、恶意XML/ZIP、迁移、界面构建和真实run证据。不从失败自动制造缺陷或AI效率结论。"
+}

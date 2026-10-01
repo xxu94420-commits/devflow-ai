@@ -1,0 +1,6 @@
+{
+  "title": "feat: connect GitHub Actions JUnit evidence to development tasks",
+  "head": "codex/ci-test-evidence",
+  "base": "main",
+  "body": "原有测试结果需要人工录入，无法从真实CI追溯任务验证过程。新增JUnit报告产出与Actions采集，按项目/run_id/attempt幂等存储，精确SHA或PR唯一匹配任务；缺失报告、歧义和未授权保持明确状态。只有完整且已归属的实际用例进入任务指标，跳过不计通过，更早CI未知时不输出首次通过结论。\n\n增加周期采集、分页证据API、项目和任务证据界面、迁移、下载重定向凭据隔离、XML/ZIP大小与实体防护。公网HTTP只读边界不变。README保留公网入口并补充链路配置、权限和限制。\n\n真实证据：run 36857274639 JUnit解析44通过（当时41后端+3前端），重复同步TestResult只有1条；没有伪造真实工时。后端57项回归通过；前端与容器最终结果以CI为准。\n\nRefs #12。公网完整报告下载需要维护者另行配置仓库Actions读取权限；未配置时显示公开运行状态，不伪造用例数量。"
+}
