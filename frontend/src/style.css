@@ -962,3 +962,50 @@ footer small {
 .ci-digest {
   overflow-wrap: anywhere;
 }
+/* Requirement review keeps evidence and human decisions visibly separate. */
+.review-workspace {
+  display: grid;
+  gap: 24px;
+}
+.review-workspace h3 {
+  margin-top: 0;
+}
+.review-fields {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+}
+.review-workspace textarea {
+  width: 100%;
+  resize: vertical;
+}
+.review-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 20px 0;
+  line-height: 1.6;
+}
+.review-consent input {
+  width: auto;
+  margin-top: 5px;
+}
+.review-finding {
+  border-left: 3px solid #7775e7;
+  padding: 14px 18px;
+  background: #f7f8fc;
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+}
+.review-history {
+  border-top: 1px solid #e5e8ef;
+  margin-top: 24px;
+  padding-top: 16px;
+}
+.review-decision {
+  margin: 12px 0 24px;
+}
+.review-workspace button {
+  margin-right: 8px;
+  margin-top: 8px;
+}

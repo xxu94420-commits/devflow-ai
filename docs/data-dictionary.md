@@ -38,3 +38,7 @@ Demo实体依赖一个`synthetic/devflow-demo`项目；seed第一次执行生成
 - `test_results.ci_run_id`：可空唯一外键，null代表人工记录；自动记录仅来自完整且已归属的执行，跳过不计入total。
 - `projects.ci_synced_at/ci_sync_note`：上次成功采集时间及范围/失败提示，与仓库元数据导入时间分开。
 
+
+## 需求评估扩展
+
+Requirement新增acceptance_criteria、version。RequirementRevision按需求与版本唯一，保存文本快照与修改原因。RequirementReview保存request_key、输入哈希/快照、Prompt版本、模型与接收地址、状态/安全错误码、结构化问题、用量与耗时。ReviewDecision按评估与问题序号唯一，保存不可覆盖的人工采纳/驳回理由。旧版本评估不能确认新版需求。公网试用不写这些表；完整协议见[需求评估](requirement-review.md)。

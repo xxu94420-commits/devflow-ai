@@ -319,6 +319,16 @@ def task_detail(task_id: int, db: Session = Depends(get_db)):
     result["issue"] = row(issue) if issue else None
     if req:
         event("requirement", req, req.title)
+        for review in db.scalars(
+            select(m.RequirementReview).where(
+                m.RequirementReview.requirement_id == req.id
+            )
+        ):
+            event(
+                "requirement_review",
+                review,
+                f"需求v{review.snapshot['version']}评估：{review.status}",
+            )
     if issue:
         event("issue", issue, issue.title)
     for key, cls in [

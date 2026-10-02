@@ -1,0 +1,6 @@
+{
+  "title": "feat: add evidence-grounded requirement review and bounded public AI trial",
+  "head": "codex/requirement-review",
+  "base": "main",
+  "body": "需求负责人可以保存版本化需求、调用兼容模型查找带原文引用的待澄清问题，人工采纳或驳回后修订并创建关联任务。旧版本报告保留，不能确认新版需求。\n\n公网项目数据继续只读，可显式启用不落库的云端试用；单进程串行、15秒间隔、每日20次尝试，重启会重置，不冒充可靠预算控制。未连接、超时、拒答和格式错误均明确失败，不以模拟答案替代。\n\n验证：后端79项测试、前端8项测试、格式检查与生产构建通过；空白SQLite升级/降级/再升级及alembic check通过；本地浏览器验证创建、版本修订、草稿保护和任务关联。六条评测样例为明确标注的模拟数据，真实Groq调用待部署后验证。\n\nRefs #14。"
+}
