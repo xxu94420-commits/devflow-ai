@@ -1,0 +1,6 @@
+{
+  "title": "fix: simplify Groq request schema after provider rejection",
+  "head": "codex/groq-schema-compatibility",
+  "base": "main",
+  "body": "531dddd部署后的真实试用返回provider_error，尚无成功结果。供应商Schema改为内联基础结构，数量、长度、重复问题和原文引用继续由平台校验；Groq请求使用max_completion_tokens并排除推理正文，错误保留HTTP状态码且不回显原始错误。\n\n增加Schema兼容性及本地边界回归，81项后端测试通过，Ruff/Black通过；前端未改功能。增加面向非技术使用者的操作指南及首次失败截图。Refs #16、#14。线上改善仍需部署后真实验证。"
+}

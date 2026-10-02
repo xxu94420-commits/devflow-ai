@@ -141,8 +141,8 @@ def test_not_configured_consent_mode_isolation_and_failures(client, monkeypatch)
         ("valid", None),
         ("429", "rate_limited"),
         ("401", "authentication"),
-        ("500", "provider_error"),
-        ("redirect", "provider_error"),
+        ("500", "provider_http_500"),
+        ("redirect", "provider_http_302"),
         ("timeout", "timeout"),
         ("invalid", "invalid_schema"),
         ("ungrounded", "ungrounded_quote"),
@@ -230,7 +230,7 @@ def test_groq_strict_format_is_scoped_and_matches_contract():
     assert fmt["json_schema"]["strict"] is True
     assert schema["additionalProperties"] is False
     assert schema["required"] == ["findings"]
-    finding = schema["$defs"]["Finding"]
+    finding = schema["properties"]["findings"]["items"]
     assert set(finding["required"]) == {
         "category",
         "field",
@@ -245,3 +245,19 @@ def test_groq_strict_format_is_scoped_and_matches_contract():
     assert review_provider.response_format(config | {"model": "other-model"}) == {
         "type": "json_object"
     }
+
+
+def test_groq_schema_keeps_local_bounds():
+    from app.review_contract import validate_output
+
+    schema = review_provider.provider_schema()
+    serialized = json.dumps(schema)
+    assert "$ref" not in serialized and "$defs" not in serialized
+    assert "minLength" not in serialized and "maxLength" not in serialized
+    with pytest.raises(ValueError):
+        validate_output(
+            json.dumps({"findings": [FINDING] * 9}), {"description": "快速处理文件"}
+        )
+    assert schema["properties"]["findings"]["items"]["properties"]["category"][
+        "enum"
+    ] == ["ambiguity", "acceptance", "boundary", "exception", "conflict"]

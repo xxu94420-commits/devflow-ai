@@ -94,10 +94,31 @@ def response_format(config):
             "json_schema": {
                 "name": "requirement_findings",
                 "strict": True,
-                "schema": ReviewOutput.model_json_schema(),
+                "schema": provider_schema(),
             },
         }
     return {"type": "json_object"}
+
+
+def provider_schema():
+    """Send a simple inline schema; length/count bounds stay in local validation."""
+    schema = ReviewOutput.model_json_schema()
+    definitions = schema.get("$defs", {})
+
+    def simplify(value):
+        if isinstance(value, list):
+            return [simplify(item) for item in value]
+        if not isinstance(value, dict):
+            return value
+        if "$ref" in value:
+            return simplify(definitions[value["$ref"].split("/")[-1]])
+        return {
+            key: simplify(item)
+            for key, item in value.items()
+            if key not in {"$defs", "title", "minLength", "maxLength", "maxItems"}
+        }
+
+    return simplify(schema)
 
 
 def generate(source, config):
@@ -112,6 +133,9 @@ def generate(source, config):
         "max_tokens": 4096,
         "stream": False,
     }
+    if payload["response_format"]["type"] == "json_schema":
+        payload["max_completion_tokens"] = payload.pop("max_tokens")
+        payload["include_reasoning"] = False
     try:
         # One attempt only: retrying a timed-out billable request may double charge.
         with httpx.Client(timeout=httpx.Timeout(90, connect=10)) as client:
@@ -127,7 +151,7 @@ def generate(source, config):
                 if response.status_code in (401, 403):
                     raise ReviewFailure("authentication")
                 if response.status_code != 200:
-                    raise ReviewFailure("provider_error")
+                    raise ReviewFailure(f"provider_http_{response.status_code}")
                 parts, size = [], 0
                 for chunk in response.iter_bytes():
                     size += len(chunk)
