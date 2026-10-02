@@ -1,0 +1,1 @@
+{"title": "fix: harden Groq structured output after real trial validation failure", "body": "首次公网真实Groq试用返回invalid_output，未生成替代结果。接入Groq对gpt-oss支持的strict JSON Schema约束，保留引用与语义边界校验；增加不泄露原始输出的错误分类与回归测试，再执行公网验收。"}

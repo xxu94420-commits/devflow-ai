@@ -1,0 +1,1 @@
+{"title": "fix: constrain Groq review output and expose safe validation codes", "head": "codex/groq-structured-output", "base": "main", "body": "公网首次真实Groq试用返回invalid_output，项目拒绝了该结果。为官方端点的gpt-oss模型启用strict JSON Schema，其他兼容服务继续使用JSON对象模式。保留本地结构和逐字引用校验，区分结构、引用、重复问题等安全错误码，不返回模型原始响应。\n\n新增格式作用域回归；本地后端80项、前端8项通过，lint和构建通过。线上实际改善将在部署后验证，不把Mock视为模型效果。Refs #16，#14。"}
