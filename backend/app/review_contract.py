@@ -45,7 +45,14 @@ def validate_output(content, source):
         # Exact source quotation, no fuzzy matching or manufactured evidence.
         if finding.quote not in source[finding.field]:
             raise ValueError("ungrounded_quote")
-        key = (finding.category, finding.field, finding.quote)
+        # The same evidence may legitimately raise several distinct questions.
+        key = (
+            finding.category,
+            finding.field,
+            finding.quote,
+            finding.problem,
+            finding.question,
+        )
         if key in seen:
             raise ValueError("duplicate_finding")
         seen.add(key)

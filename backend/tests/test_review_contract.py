@@ -45,3 +45,12 @@ def test_duplicate_limit_and_version_fingerprint():
     with pytest.raises(ValueError):
         validate_output(json.dumps({"findings": [FINDING] * 9}), SOURCE)
     assert fingerprint(SOURCE) != fingerprint(SOURCE | {"version": 2})
+
+
+def test_distinct_questions_can_share_the_same_evidence():
+    second = FINDING | {
+        "problem": "没有明确处理时间适用的文件规模",
+        "question": "响应时间要求适用于多大文件？",
+    }
+    result = validate_output(json.dumps({"findings": [FINDING, second]}), SOURCE)
+    assert result == [FINDING, second]
