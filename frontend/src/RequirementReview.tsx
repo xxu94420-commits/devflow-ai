@@ -631,7 +631,10 @@ export function RequirementReview({
                       {r.created_at} UTC · {r.prompt_version} ·{" "}
                       {r.status === "succeeded"
                         ? "已完成，待人工判断"
-                        : errors[r.error_code] || "处理中，可稍后刷新历史"}
+                        : errors[r.error_code] ||
+                          (r.status === "failed"
+                            ? `模型评估失败（${r.error_code}）`
+                            : "处理中，可稍后刷新历史")}
                     </p>
                     <details>
                       <summary>输入快照与调用证据</summary>

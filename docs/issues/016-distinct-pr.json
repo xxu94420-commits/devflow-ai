@@ -1,0 +1,6 @@
+{
+  "title": "fix: preserve distinct review questions sharing source evidence",
+  "head": "codex/review-distinct-findings",
+  "base": "main",
+  "body": "同一段需求原文可能同时缺少文件格式和处理规模，旧规则按分类/字段/引文认定重复，会拒绝不同问题。改为五项内容完全相同才视为重复，保留数量、长度与逐字引用校验。\n\n增加同一证据不同问题的回归；完全重复问题仍拒绝。Refs #16、#14。记录130fe60的真实HTTP成功与浏览器duplicate_finding失败，随后重新验收。"
+}
