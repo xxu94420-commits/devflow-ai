@@ -60,3 +60,7 @@ python scripts/evaluate_requirements.py --provider cloud --allow-model-call
 ```
 
 结果写入忽略Git的reports/requirement-eval.json，包含真实失败记录、分类遗漏/额外建议及版本信息，需人工复核。未配置服务时不生成准确率或假报告。真实模型验证结果应在执行后另行记录。
+
+## 2026-10-02 公网验收
+
+运行版本bc42766，Groq gpt-oss-20b已完成真实调用及浏览器临时采纳操作。输入为公开模拟的“运营上传活动名单”，网页实际显示6条问题，逐字引用通过平台校验。保留此前invalid_output、provider_error及duplicate_finding失败与修复过程，见开发日志。该结果是接口集成验收，不是模型准确率评测；六条评测集尚未完成独立人工评估。HTTP成功证据见[evidence/requirement-review-live-acceptance.json](evidence/requirement-review-live-acceptance.json)，其来源版本为130fe60，最终页面验收版本另见验证记录。

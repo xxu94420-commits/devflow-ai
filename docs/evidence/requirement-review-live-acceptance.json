@@ -1,0 +1,70 @@
+{
+  "executed_at": "2026-10-02T10:38:03.050565+00:00",
+  "deployed_commit": "130fe60a727cca965254af68682387fd402148f4",
+  "source_label": "synthetic/demo data",
+  "input": {
+    "title": "运营上传活动名单",
+    "description": "运营可以上传活动名单，系统应快速处理，方便后续联系客户。",
+    "acceptance_criteria": "上传成功后可以查看结果。",
+    "consent": true
+  },
+  "http_status": 200,
+  "response": {
+    "status": "succeeded",
+    "findings": [
+      {
+        "category": "ambiguity",
+        "field": "description",
+        "quote": "系统应快速处理",
+        "problem": "未定义快速的时间阈值",
+        "question": "请问系统应在多长时间内完成处理？"
+      },
+      {
+        "category": "ambiguity",
+        "field": "acceptance_criteria",
+        "quote": "上传成功后可以查看结果。",
+        "problem": "未说明如何查看结果以及结果内容",
+        "question": "请问结果应通过什么方式展示？"
+      },
+      {
+        "category": "ambiguity",
+        "field": "description",
+        "quote": "运营可以上传活动名单",
+        "problem": "未说明支持的文件格式",
+        "question": "请问支持哪些文件格式？"
+      },
+      {
+        "category": "boundary",
+        "field": "description",
+        "quote": "上传活动名单",
+        "problem": "未说明文件大小限制",
+        "question": "请问单个文件大小上限是多少？"
+      },
+      {
+        "category": "exception",
+        "field": "acceptance_criteria",
+        "quote": "上传成功后可以查看结果。",
+        "problem": "未说明上传失败时的错误处理",
+        "question": "请问上传失败时应如何反馈错误信息？"
+      },
+      {
+        "category": "ambiguity",
+        "field": "title",
+        "quote": "运营上传活动名单",
+        "problem": "未说明上传权限范围",
+        "question": "请问哪些角色拥有上传权限？"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 525,
+      "completion_tokens": 871,
+      "total_tokens": 1396
+    },
+    "model": "openai/gpt-oss-20b",
+    "provider": "https://api.groq.com/openai/v1",
+    "prompt_version": "requirement-review-v1",
+    "duration_ms": 1211,
+    "stored": false
+  },
+  "limitations": "Public synthetic input; integration acceptance only, not an accuracy benchmark or real business usage record."
+}

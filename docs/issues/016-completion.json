@@ -1,0 +1,1 @@
+{"body": "已完成请求Schema兼容性与重复判定修复。最终bc42766真实浏览器调用成功显示6条问题，临时采纳正常；CI通过。保留最初invalid_output、provider_error和duplicate_finding失败，不宣称稳定性或准确率评测已完成。修复证据见PR #17/#18/#19及docs/verification.md。"}
