@@ -74,3 +74,5 @@
 ### Issue #16：首次真实Groq调用失败
 
 部署084520b后，使用公网预填的公开模拟需求完成真实请求，返回invalid_output；平台拒绝不符合契约的结果，未伪装成成功。通用错误不能确定具体哪一项不符合，新增安全错误分类并为Groq gpt-oss启用其官方支持的strict JSON Schema，继续逐字验证引用，其他兼容服务保持JSON对象模式。修复效果以再次验收为准。
+
+531dddd部署后的真实请求得到provider_error，仍未宣称模型可用。后续将供应商请求Schema简化为内联基础结构，长度与数量继续由平台严格校验，并使用Groq的max_completion_tokens/include_reasoning参数；接口错误保留HTTP状态码，不回显错误正文。该调整为兼容性修复尝试，具体效果仍以真实验收结果为准。
