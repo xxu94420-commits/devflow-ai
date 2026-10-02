@@ -50,9 +50,15 @@ class RequirementIn(Input):
     project_id: int
     title: Text
     description: str = Field(default="", max_length=2000)
+    acceptance_criteria: str = Field(default="", max_length=2000)
     change_count: Count = 0
     created_at: datetime = Field(default_factory=utcnow)
     completed_at: datetime | None = None
+
+
+class RequirementUpdate(RequirementIn):
+    expected_version: int = Field(ge=1)
+    revision_reason: str = Field(min_length=1, max_length=500)
 
 
 class TaskIn(Input):

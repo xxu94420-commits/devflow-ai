@@ -36,6 +36,7 @@ import type {
 } from "./api";
 import { Chart } from "./Chart";
 import { CISection } from "./CISection";
+import { RequirementReview } from "./RequirementReview";
 
 const pages = [
   { name: "总览 Dashboard", icon: LayoutDashboard },
@@ -43,6 +44,7 @@ const pages = [
   { name: "AI Coding 分析", icon: Sparkles },
   { name: "任务与协作链路", icon: GitBranch },
   { name: "周报与复盘", icon: ClipboardList },
+  { name: "需求质量评估", icon: Bot },
 ];
 const dateString = (date: Date) => date.toISOString().slice(0, 10);
 const today = dateString(new Date(Date.now() + 86400000));
@@ -429,6 +431,7 @@ export default function App() {
                     "AI Coding 效果分析",
                     "任务与协作链路",
                     "周报与复盘",
+                    "需求质量评估",
                   ][page]
                 }
               </h1>
@@ -440,11 +443,12 @@ export default function App() {
                     "以同类任务对比观察 AI 表现，让样本与限制一同可见。",
                     "记录真实开发过程，追踪从需求到复盘的完整历史。",
                     "把指标变化转化为可追溯、可讨论的复盘材料。",
+                    "发现需求中需要澄清的地方，由你确认，再交给开发。",
                   ][page]
                 }
               </p>
             </div>
-            {!readOnly && (
+            {!readOnly && page !== 5 && (
               <button
                 className="primary"
                 onClick={() => setModal(page === 2 ? "ai" : "import")}
@@ -507,7 +511,7 @@ export default function App() {
           {readOnly && (
             <div className="notice" role="status">
               公开只读演示 ·
-              可筛选、查看协作链路并下载周报。编辑和导入已关闭；Live
+              可筛选、查看协作链路并下载周报。项目编辑和导入已关闭；独立AI试用的可用状态见需求质量评估页。Live
               仓库元数据为启动快照；CI采集状态见项目详情。
             </div>
           )}
@@ -958,6 +962,16 @@ export default function App() {
                       </Panel>
                     )}
                   </>
+                )}
+                {page === 5 && (
+                  <RequirementReview
+                    key={`${mode}-${pid}`}
+                    readOnly={readOnly}
+                    mode={mode}
+                    projectId={pid}
+                    projects={projects}
+                    onTask={(id) => void openTask(id)}
+                  />
                 )}
                 {page === 4 && (
                   <>

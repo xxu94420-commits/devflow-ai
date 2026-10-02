@@ -28,9 +28,15 @@ with httpx.Client(base_url=args.url.rstrip("/"), timeout=30) as client:
         f"/api/tasks/{tasks[0]['id']}",
         "/api/reports?mode=demo",
         "/api/ci/status",
+        "/api/review/connections",
+        "/api/review/trial",
         "/api/ci/runs?mode=live",
     ]:
         client.get(path).raise_for_status()
+    trial = client.get("/api/review/trial").json()
+    assert client.post("/api/review/trial", json={}).status_code == (
+        422 if trial["enabled"] else 403
+    )  # Invalid input never invokes a model.
     download = client.get("/api/reports/download?mode=demo")
     download.raise_for_status()
     assert "attachment" in download.headers["content-disposition"]

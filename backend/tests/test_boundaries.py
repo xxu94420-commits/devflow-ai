@@ -135,7 +135,13 @@ def test_full_update_links_and_foreign_keys(client):
     assert (
         client.put(
             f"/api/requirements/{req['id']}",
-            json={"project_id": pid, "title": "r2", "change_count": 2},
+            json={
+                "project_id": pid,
+                "title": "r2",
+                "change_count": 2,
+                "expected_version": 1,
+                "revision_reason": "boundary fixture",
+            },
         ).status_code
         == 200
     )
