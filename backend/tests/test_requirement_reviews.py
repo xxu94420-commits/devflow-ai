@@ -144,8 +144,8 @@ def test_not_configured_consent_mode_isolation_and_failures(client, monkeypatch)
         ("500", "provider_error"),
         ("redirect", "provider_error"),
         ("timeout", "timeout"),
-        ("invalid", "invalid_output"),
-        ("ungrounded", "invalid_output"),
+        ("invalid", "invalid_schema"),
+        ("ungrounded", "ungrounded_quote"),
         ("truncated", "incomplete_output"),
     ],
 )
@@ -220,3 +220,28 @@ def test_connection_validation_and_ollama(monkeypatch):
     )
     with pytest.raises(review_provider.ReviewFailure):
         review_provider.connection("ollama")
+
+
+def test_groq_strict_format_is_scoped_and_matches_contract():
+    config = {"url": "https://api.groq.com/openai/v1", "model": "openai/gpt-oss-20b"}
+    fmt = review_provider.response_format(config)
+    assert fmt["type"] == "json_schema"
+    schema = fmt["json_schema"]["schema"]
+    assert fmt["json_schema"]["strict"] is True
+    assert schema["additionalProperties"] is False
+    assert schema["required"] == ["findings"]
+    finding = schema["$defs"]["Finding"]
+    assert set(finding["required"]) == {
+        "category",
+        "field",
+        "quote",
+        "problem",
+        "question",
+    }
+    assert finding["additionalProperties"] is False
+    assert review_provider.response_format(
+        config | {"url": "https://other.example/v1"}
+    ) == {"type": "json_object"}
+    assert review_provider.response_format(config | {"model": "other-model"}) == {
+        "type": "json_object"
+    }

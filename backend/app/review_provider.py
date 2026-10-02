@@ -4,9 +4,10 @@ import json
 from urllib.parse import urlsplit
 
 import httpx
+from pydantic import ValidationError
 
 from .config import get_settings
-from .review_contract import SYSTEM_PROMPT, validate_output
+from .review_contract import SYSTEM_PROMPT, ReviewOutput, validate_output
 
 
 class ReviewFailure(Exception):
@@ -82,6 +83,23 @@ def connections():
     return result
 
 
+def response_format(config):
+    # Vendor-specific strict mode is scoped to documented Groq models.
+    if config["url"] == "https://api.groq.com/openai/v1" and config["model"] in {
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+    }:
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "requirement_findings",
+                "strict": True,
+                "schema": ReviewOutput.model_json_schema(),
+            },
+        }
+    return {"type": "json_object"}
+
+
 def generate(source, config):
     headers = {"Authorization": "Bearer " + config["key"]} if config["key"] else {}
     payload = {
@@ -90,7 +108,7 @@ def generate(source, config):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": json.dumps(source, ensure_ascii=False)},
         ],
-        "response_format": {"type": "json_object"},
+        "response_format": response_format(config),
         "max_tokens": 4096,
         "stream": False,
     }
@@ -120,7 +138,17 @@ def generate(source, config):
         choice = data["choices"][0]
         if choice.get("finish_reason") != "stop" or choice["message"].get("refusal"):
             raise ReviewFailure("incomplete_output")
-        findings = validate_output(choice["message"]["content"], source)
+        try:
+            findings = validate_output(choice["message"]["content"], source)
+        except ValidationError:
+            raise ReviewFailure("invalid_schema") from None
+        except ValueError as exc:
+            code = str(exc)
+            raise ReviewFailure(
+                code
+                if code in {"ungrounded_quote", "duplicate_finding", "output_too_large"}
+                else "invalid_output"
+            ) from None
         usage = {
             k: v
             for k, v in (data.get("usage") or {}).items()
